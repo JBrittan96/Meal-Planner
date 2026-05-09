@@ -100,27 +100,31 @@
   .week-nav .week-label { flex: 1; font-size: 14px; font-weight: 500; min-width: 180px; }
   .week-nav .week-label .week-sub { font-size: 12px; color: var(--text-secondary); font-weight: 400; margin-left: 6px; }
 
-  .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 1.5rem; }
-  .day { background: var(--bg-primary); border: 0.5px solid var(--border-tertiary); border-radius: var(--radius-md); padding: 10px; min-height: 130px; cursor: pointer; display: flex; flex-direction: column; transition: border-color 0.15s; }
+  .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+  .day { background: var(--bg-primary); border: 0.5px solid var(--border-tertiary); border-radius: var(--radius-md); padding: 14px; min-height: 170px; cursor: pointer; display: flex; flex-direction: column; transition: border-color 0.15s; }
   .day:hover { border-color: var(--border-secondary); }
-  .day.targeting { border: 2px solid var(--border-info); background: var(--bg-info); padding: 9px; }
+  .day.targeting { border: 2px solid var(--border-info); background: var(--bg-info); padding: 13px; }
   .day.locked { background: var(--bg-tertiary); cursor: default; }
   .day.locked:hover { border-color: var(--border-tertiary); }
   .day.locked .day-meal { color: var(--text-secondary); }
   .day.locked .day-meal.empty { color: var(--text-tertiary); }
   .day-edit { color: var(--text-info) !important; }
   .day-edit:hover { color: var(--text-info) !important; opacity: 0.7; }
-  .day-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 4px; }
+  .day-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 6px; }
   .day-label { display: flex; flex-direction: column; gap: 2px; }
-  .day-name { font-size: 11px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
-  .day-date { font-size: 11px; color: var(--text-tertiary); }
-  .day-today { color: var(--text-info); font-weight: 500; }
-  .day-weather { display: flex; align-items: center; gap: 3px; font-size: 11px; color: var(--text-secondary); white-space: nowrap; }
-  .day-weather .wx-icon { font-size: 14px; line-height: 1; }
-  .day-meal { font-size: 13px; font-weight: 500; line-height: 1.3; flex: 1; }
+  .day-name { font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+  .day-date { font-size: 12px; color: var(--text-tertiary); }
+  .day-today { color: var(--text-info); font-weight: 600; }
+  .day-weather { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; font-size: 11px; color: var(--text-secondary); white-space: nowrap; }
+  .day-weather .wx-top { display: flex; align-items: center; gap: 4px; }
+  .day-weather .wx-icon { font-size: 18px; line-height: 1; }
+  .day-weather .wx-max { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+  .day-weather .wx-range { font-size: 10px; color: var(--text-tertiary); }
+  .day-weather .wx-label { font-size: 10px; color: var(--text-tertiary); max-width: 80px; text-overflow: ellipsis; overflow: hidden; }
+  .day-meal { font-size: 14px; font-weight: 500; line-height: 1.35; flex: 1; }
   .day-meal.empty { color: var(--text-tertiary); font-weight: 400; font-style: italic; }
-  .day-tag { font-size: 10px; padding: 2px 6px; border-radius: 999px; background: var(--bg-secondary); color: var(--text-secondary); align-self: flex-start; margin-top: 6px; }
-  .day-clear { font-size: 11px; color: var(--text-tertiary); margin-top: 6px; cursor: pointer; align-self: flex-start; background: transparent; border: none; padding: 0; }
+  .day-tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--bg-secondary); color: var(--text-secondary); align-self: flex-start; margin-top: 8px; }
+  .day-clear { font-size: 11px; color: var(--text-tertiary); margin-top: 8px; cursor: pointer; align-self: flex-start; background: transparent; border: none; padding: 0; }
   .day-clear:hover { color: var(--text-danger); }
 
   .banner { background: var(--bg-info); color: var(--text-info); padding: 10px 14px; border-radius: var(--radius-md); margin-bottom: 1rem; font-size: 13px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -175,8 +179,8 @@
 
   @media (max-width: 700px) {
     .app { padding: 1rem 0.75rem 4rem; }
-    .week { grid-template-columns: repeat(2, 1fr); }
-    .day { min-height: 90px; }
+    .week { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .day { min-height: 120px; padding: 12px; }
     .ing-line { grid-template-columns: 1fr 60px 100px 36px; }
     .week-nav .week-label { min-width: 100%; order: -1; text-align: center; }
   }
@@ -227,6 +231,7 @@
           <button class="menu-item" id="import-btn">Import data (restore)</button>
           <div class="menu-divider"></div>
           <button class="menu-item" id="set-location-btn">Set weather location</button>
+          <button class="menu-item" id="set-week-start-btn">Set week start day</button>
           <div class="menu-divider"></div>
           <button class="menu-item" id="reset-seed-btn">Reset to default meals</button>
           <button class="menu-item danger" id="clear-meals-btn">Clear all meals</button>
@@ -385,7 +390,7 @@ function flashSync(msg, isError) {
 
 const MEASURES = ['Unit', 'Pack', 'Can', 'Bottle', 'Bag', 'Pinch', 'Handful', 'Cup (c)', 'Gram (g)', 'Kilogram (kg)', 'Milliliter (ml)', 'Liter (L)', 'Tablespoon (Tbsp)', 'Teaspoon (tsp)'];
 const TAGS = ['Chicken', 'Beef', 'Pork', 'Seafood', 'Pasta', 'Other'];
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']; // legacy, used for old-format migration only
 
 const SEED_MEALS = [
   { name: 'Sandwiches', tag: 'Other', ingredients: [['Bread Loaf',1,'Unit'],['Prosciutto',1,'Pack'],['Mixed Leafy Greens',1,'Pack'],['Tomato',2,'Unit'],['Salami',1,'Pack'],['Mozzarella',1,'Unit'],['Pesto',1,'Unit'],['Mustard',1,'Unit']] },
@@ -440,14 +445,16 @@ const SEED_MEALS = [
    DATE HELPERS
    weekPlan is now keyed by ISO date (e.g. '2026-05-11': 'Beef Stew').
    Each day cell renders with its real date. STATE.viewWeekStart tracks
-   which week is being viewed (always a Monday).
+   which week is being viewed (always the user's chosen start day).
+   STATE.weekStartDay: 0=Sunday, 1=Monday, ..., 6=Saturday. Default 0.
 ====================================================================== */
-function startOfWeek(d) {
+function startOfWeek(d, weekStartDay) {
+  const startDay = weekStartDay != null ? weekStartDay : (STATE && STATE.weekStartDay != null ? STATE.weekStartDay : 0);
   const date = new Date(d);
   date.setHours(0, 0, 0, 0);
-  const day = date.getDay();
-  const diff = (day === 0 ? -6 : 1 - day);
-  date.setDate(date.getDate() + diff);
+  const day = date.getDay(); // 0=Sun..6=Sat
+  const diff = (day - startDay + 7) % 7;
+  date.setDate(date.getDate() - diff);
   return date;
 }
 function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
@@ -456,8 +463,17 @@ function isoDate(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).pa
 function isSameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
 function fmtDayDate(d) { return d.getDate() + ' ' + d.toLocaleString('en-AU', { month: 'short' }); }
 function fmtLongDate(d) { return d.toLocaleString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }); }
+
+/* Returns 7 dates starting from weekStart */
 function getWeekDates(weekStart) {
-  return DAYS.map((_, i) => addDays(weekStart, i));
+  return [0, 1, 2, 3, 4, 5, 6].map(i => addDays(weekStart, i));
+}
+
+/* Returns the day-name labels in display order, starting from STATE.weekStartDay */
+const ALL_DAYS_BY_INDEX = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+function getOrderedDayNames() {
+  const start = STATE.weekStartDay != null ? STATE.weekStartDay : 0;
+  return [0, 1, 2, 3, 4, 5, 6].map(i => ALL_DAYS_BY_INDEX[(start + i) % 7]);
 }
 
 /* ======================================================================
@@ -519,8 +535,8 @@ async function loadWeather() {
 const STATE = {
   meals: [],
   selected: new Set(),
-  weekPlan: {},          // { '2026-05-11': 'Beef Stew', ... } — single source of truth
-  unlockedDates: new Set(), // dates the user has explicitly unlocked for editing past entries
+  weekPlan: {},
+  unlockedDates: new Set(),
   activeTag: 'All',
   weekTag: 'All',
   activeTab: 'week',
@@ -535,7 +551,8 @@ const STATE = {
   pickerFiltered: [],
   weather: null,
   location: null,
-  viewWeekStart: startOfWeek(new Date())
+  weekStartDay: 0, // 0=Sun by default
+  viewWeekStart: null // set after loadState so it respects weekStartDay
 };
 
 async function loadState() {
@@ -545,6 +562,9 @@ async function loadState() {
   STATE.selected = new Set(storage.get('selected') || []);
   STATE.checkedItems = new Set(storage.get('checked') || []);
   STATE.location = storage.get('location') || null;
+  const savedStart = storage.get('weekStartDay');
+  STATE.weekStartDay = (savedStart != null && savedStart >= 0 && savedStart <= 6) ? savedStart : 0;
+  STATE.viewWeekStart = startOfWeek(new Date());
 
   // Load weekPlan and migrate old { Monday: ... } format to { iso-date: ... } if needed
   const rawPlan = storage.get('weekPlan');
@@ -552,7 +572,8 @@ async function loadState() {
     const keys = Object.keys(rawPlan);
     const isOldFormat = keys.length && keys.every(k => DAYS.includes(k));
     if (isOldFormat) {
-      const monday = startOfWeek(new Date());
+      // Force Monday-start for migration since old keys were Monday-Sunday
+      const monday = startOfWeek(new Date(), 1);
       const migrated = {};
       DAYS.forEach((dn, i) => {
         if (rawPlan[dn]) migrated[isoDate(addDays(monday, i))] = rawPlan[dn];
@@ -573,6 +594,7 @@ function saveSelected() { return storage.set('selected', [...STATE.selected]); }
 function saveChecked() { return storage.set('checked', [...STATE.checkedItems]); }
 function saveWeekPlan() { return storage.set('weekPlan', STATE.weekPlan); }
 function saveLocation() { return storage.set('location', STATE.location); }
+function saveWeekStartDay() { return storage.set('weekStartDay', STATE.weekStartDay); }
 
 /* ======================================================================
    PAST/PRESENT/FUTURE HELPERS
@@ -612,7 +634,8 @@ function renderWeekGrid() {
   grid.innerHTML = '';
   const dates = getWeekDates(STATE.viewWeekStart);
   const today = new Date();
-  DAYS.forEach((day, idx) => {
+  const orderedDays = getOrderedDayNames();
+  orderedDays.forEach((day, idx) => {
     const date = dates[idx];
     const dateKey = isoDate(date);
     const isPast = isPastDate(dateKey);
@@ -643,8 +666,11 @@ function renderWeekGrid() {
       if (wx) {
         const wxEl = document.createElement('div');
         wxEl.className = 'day-weather';
-        wxEl.title = weatherFor(wx.code).label + ', ' + wx.min + ' to ' + wx.max + ' degrees';
-        wxEl.innerHTML = '<span class="wx-icon">' + weatherFor(wx.code).icon + '</span><span>' + wx.max + '\u00b0</span>';
+        const wInfo = weatherFor(wx.code);
+        wxEl.title = wInfo.label + ', ' + wx.min + '\u00b0 to ' + wx.max + '\u00b0';
+        wxEl.innerHTML =
+          '<div class="wx-top"><span class="wx-icon">' + wInfo.icon + '</span><span class="wx-max">' + wx.max + '\u00b0</span></div>' +
+          '<div class="wx-range">' + wx.min + '\u00b0 / ' + wx.max + '\u00b0</div>';
         header.appendChild(wxEl);
       }
     }
@@ -918,7 +944,8 @@ function renderGrocery() {
     wList.innerHTML = dates.map((d, i) => {
       const meal = STATE.weekPlan[isoDate(d)];
       if (!meal) return '';
-      return '<div style="padding:2px 0;"><span style="color: var(--text-secondary); font-size: 12px; display: inline-block; width: 130px;">' + DAYS[i] + ' ' + fmtDayDate(d) + '</span>' + meal + '</div>';
+      const orderedDays = getOrderedDayNames();
+      return '<div style="padding:2px 0;"><span style="color: var(--text-secondary); font-size: 12px; display: inline-block; width: 130px;">' + orderedDays[i] + ' ' + fmtDayDate(d) + '</span>' + meal + '</div>';
     }).filter(Boolean).join('');
     wrap.appendChild(wList);
   }
@@ -1124,9 +1151,8 @@ function getPastEntries() {
     .filter(([d, m]) => d < today && m)
     .map(([date, meal]) => {
       const date_ = new Date(date + 'T00:00:00');
-      const dayIdx = (date_.getDay() + 6) % 7; // Mon=0
       const m = STATE.meals.find(mm => mm.name === meal);
-      return { date, dayName: DAYS[dayIdx], meal, tag: m ? m.tag : '' };
+      return { date, dayName: ALL_DAYS_BY_INDEX[date_.getDay()], meal, tag: m ? m.tag : '' };
     })
     .sort((a, b) => a.date.localeCompare(b.date));
 }
@@ -1318,16 +1344,37 @@ async function clearAllMeals() {
   renderAll();
 }
 
+async function setWeekStartDay() {
+  const labels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const current = STATE.weekStartDay;
+  const promptMsg = 'Pick which day your week should start on:\n\n' +
+    labels.map((l, i) => '  ' + i + ' = ' + l + (i === current ? '  (current)' : '')).join('\n') +
+    '\n\nEnter a number 0 to 6:';
+  const input = prompt(promptMsg, String(current));
+  if (input === null) return;
+  const n = parseInt(input.trim(), 10);
+  if (isNaN(n) || n < 0 || n > 6) {
+    alert('Please enter a number between 0 and 6.');
+    return;
+  }
+  STATE.weekStartDay = n;
+  await saveWeekStartDay();
+  STATE.viewWeekStart = startOfWeek(new Date());
+  renderWeekGrid();
+  renderWeekPicker();
+}
+
 async function copyPreviousWeek() {
   const prevStart = addWeeks(STATE.viewWeekStart, -1);
   const prevDates = getWeekDates(prevStart);
   const currentDates = getWeekDates(STATE.viewWeekStart);
+  const orderedDays = getOrderedDayNames();
   const toCopy = [];
   prevDates.forEach((d, i) => {
     const meal = STATE.weekPlan[isoDate(d)];
     const targetKey = isoDate(currentDates[i]);
     // skip past dates so we don't rewrite history
-    if (meal && !isPastDate(targetKey)) toCopy.push({ targetDate: targetKey, dayName: DAYS[i], meal });
+    if (meal && !isPastDate(targetKey)) toCopy.push({ targetDate: targetKey, dayName: orderedDays[i], meal });
   });
   if (!toCopy.length) { alert('Nothing to copy. Either the previous week is empty, or this week\'s days have already passed.'); return; }
   const overwriting = toCopy.filter(c => STATE.weekPlan[c.targetDate]).length;
@@ -1599,6 +1646,7 @@ function setupEvents() {
   document.getElementById('export-btn').onclick = () => { settingsMenu.classList.remove('open'); exportData(); };
   document.getElementById('import-btn').onclick = () => { settingsMenu.classList.remove('open'); document.getElementById('import-file').click(); };
   document.getElementById('set-location-btn').onclick = () => { settingsMenu.classList.remove('open'); openLocationModal(); };
+  document.getElementById('set-week-start-btn').onclick = () => { settingsMenu.classList.remove('open'); setWeekStartDay(); };
   document.getElementById('reset-seed-btn').onclick = () => { settingsMenu.classList.remove('open'); resetToSeed(); };
   document.getElementById('clear-meals-btn').onclick = () => { settingsMenu.classList.remove('open'); clearAllMeals(); };
   document.getElementById('logout-btn').onclick = () => { settingsMenu.classList.remove('open'); signOut(); };
