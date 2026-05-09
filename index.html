@@ -42,14 +42,7 @@
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
-  body {
-    font-family: var(--font-sans);
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    font-size: 16px;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-  }
+  body { font-family: var(--font-sans); background: var(--bg-tertiary); color: var(--text-primary); font-size: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
   .app { max-width: 960px; margin: 0 auto; padding: 1.5rem 1.25rem 4rem; }
   header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; gap: 12px; }
   h1 { font-size: 22px; font-weight: 500; margin: 0; }
@@ -69,6 +62,7 @@
   .meal-card { background: var(--bg-primary); border: 0.5px solid var(--border-tertiary); border-radius: var(--radius-md); padding: 12px; cursor: pointer; transition: border-color 0.15s; display: flex; align-items: center; gap: 10px; }
   .meal-card:hover { border-color: var(--border-secondary); }
   .meal-card.selected { border: 2px solid var(--border-info); background: var(--bg-info); padding: 11px; }
+  .meal-card.first-match { border: 2px solid var(--border-info); padding: 11px; }
   .meal-name { font-size: 14px; font-weight: 500; flex: 1; }
   .tag-pill { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--bg-secondary); color: var(--text-secondary); }
 
@@ -102,10 +96,20 @@
   .library-card { background: var(--bg-primary); border: 0.5px solid var(--border-tertiary); border-radius: var(--radius-md); padding: 12px; margin-bottom: 8px; }
   .copy-area { width: 100%; min-height: 200px; padding: 12px; border: 0.5px solid var(--border-tertiary); border-radius: var(--radius-md); font-family: var(--font-mono); font-size: 13px; resize: vertical; background: var(--bg-primary); color: var(--text-primary); }
 
+  .week-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .week-nav .week-label { flex: 1; font-size: 14px; font-weight: 500; min-width: 180px; }
+  .week-nav .week-label .week-sub { font-size: 12px; color: var(--text-secondary); font-weight: 400; margin-left: 6px; }
+
   .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 1.5rem; }
   .day { background: var(--bg-primary); border: 0.5px solid var(--border-tertiary); border-radius: var(--radius-md); padding: 10px; min-height: 130px; cursor: pointer; display: flex; flex-direction: column; transition: border-color 0.15s; }
   .day:hover { border-color: var(--border-secondary); }
   .day.targeting { border: 2px solid var(--border-info); background: var(--bg-info); padding: 9px; }
+  .day.locked { background: var(--bg-tertiary); cursor: default; }
+  .day.locked:hover { border-color: var(--border-tertiary); }
+  .day.locked .day-meal { color: var(--text-secondary); }
+  .day.locked .day-meal.empty { color: var(--text-tertiary); }
+  .day-edit { color: var(--text-info) !important; }
+  .day-edit:hover { color: var(--text-info) !important; opacity: 0.7; }
   .day-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 4px; }
   .day-label { display: flex; flex-direction: column; gap: 2px; }
   .day-name { font-size: 11px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
@@ -118,10 +122,11 @@
   .day-tag { font-size: 10px; padding: 2px 6px; border-radius: 999px; background: var(--bg-secondary); color: var(--text-secondary); align-self: flex-start; margin-top: 6px; }
   .day-clear { font-size: 11px; color: var(--text-tertiary); margin-top: 6px; cursor: pointer; align-self: flex-start; background: transparent; border: none; padding: 0; }
   .day-clear:hover { color: var(--text-danger); }
-  .picker-search { width: 100%; margin-bottom: 12px; font-size: 14px; padding: 10px 12px; }
-  .meal-card.first-match { border: 2px solid var(--border-info); padding: 11px; }
+
   .banner { background: var(--bg-info); color: var(--text-info); padding: 10px 14px; border-radius: var(--radius-md); margin-bottom: 1rem; font-size: 13px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .banner-cancel { background: transparent; border: 0.5px solid currentColor; border-radius: var(--radius-md); padding: 4px 10px; font-size: 12px; color: inherit; cursor: pointer; }
+
+  .picker-search { width: 100%; margin-bottom: 12px; font-size: 14px; padding: 10px 12px; }
 
   .menu { position: relative; }
   .menu-content { display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: var(--bg-primary); border: 0.5px solid var(--border-tertiary); border-radius: var(--radius-md); box-shadow: 0 4px 12px rgba(0,0,0,0.08); padding: 4px; min-width: 220px; z-index: 10; }
@@ -142,11 +147,38 @@
   .login-message.success { background: var(--bg-info); color: var(--text-info); }
   .login-message.error { background: rgba(226, 75, 74, 0.1); color: var(--text-danger); }
 
+  /* Modal */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 50; display: flex; align-items: flex-start; justify-content: center; padding: 4rem 1rem; }
+  .modal { background: var(--bg-primary); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 480px; width: 100%; max-height: 80vh; overflow-y: auto; }
+  .modal h3 { margin: 0 0 0.5rem; font-size: 16px; font-weight: 500; }
+  .modal p { margin: 0 0 1rem; font-size: 13px; color: var(--text-secondary); }
+  .modal input { width: 100%; }
+
+  .autocomplete { position: relative; margin-bottom: 12px; }
+  .autocomplete-list { position: absolute; left: 0; right: 0; top: 100%; margin-top: 4px; background: var(--bg-primary); border: 0.5px solid var(--border-tertiary); border-radius: var(--radius-md); box-shadow: 0 4px 12px rgba(0,0,0,0.08); max-height: 240px; overflow-y: auto; z-index: 10; }
+  .autocomplete-item { padding: 10px 12px; font-size: 14px; cursor: pointer; border-bottom: 0.5px solid var(--border-tertiary); }
+  .autocomplete-item:last-child { border-bottom: none; }
+  .autocomplete-item:hover, .autocomplete-item.active { background: var(--bg-secondary); }
+  .autocomplete-item .ac-sub { font-size: 12px; color: var(--text-secondary); margin-left: 6px; }
+
+  /* Stats */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 1.5rem; }
+  .stat-card { background: var(--bg-secondary); border-radius: var(--radius-md); padding: 1rem; }
+  .stat-card .stat-card-num { font-size: 22px; font-weight: 500; }
+  .stat-card .stat-card-label { font-size: 12px; color: var(--text-secondary); }
+  .ranked-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 0.5px solid var(--border-tertiary); font-size: 14px; }
+  .ranked-row .rank-name { flex: 1; }
+  .ranked-row .rank-count { color: var(--text-secondary); font-size: 13px; }
+  .history-table { width: 100%; font-size: 13px; border-collapse: collapse; }
+  .history-table th, .history-table td { text-align: left; padding: 6px 8px; border-bottom: 0.5px solid var(--border-tertiary); }
+  .history-table th { color: var(--text-secondary); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+
   @media (max-width: 700px) {
     .app { padding: 1rem 0.75rem 4rem; }
     .week { grid-template-columns: repeat(2, 1fr); }
     .day { min-height: 90px; }
     .ing-line { grid-template-columns: 1fr 60px 100px 36px; }
+    .week-nav .week-label { min-width: 100%; order: -1; text-align: center; }
   }
 </style>
 </head>
@@ -156,9 +188,7 @@
   <h2>Meal Planner</h2>
   <p>Enter your username to sign in. New here? We'll set up an account on the next screen.</p>
   <input type="text" id="login-username" placeholder="Username" autocomplete="username" />
-  <div class="button-row">
-    <button class="icon-btn primary" id="login-continue-btn">Continue</button>
-  </div>
+  <div class="button-row"><button class="icon-btn primary" id="login-continue-btn">Continue</button></div>
   <div id="login-message-1" class="login-message" style="display:none;"></div>
 </div>
 
@@ -212,15 +242,26 @@
     <button class="tab" data-tab="select">Quick select</button>
     <button class="tab" data-tab="grocery">Grocery list</button>
     <button class="tab" data-tab="library">Meal library</button>
+    <button class="tab" data-tab="stats">Stats</button>
   </div>
 
   <div id="pane-week" class="pane active">
+    <div class="week-nav">
+      <button class="icon-btn" id="prev-week-btn" aria-label="Previous week">&larr;</button>
+      <button class="icon-btn" id="this-week-btn">This week</button>
+      <button class="icon-btn" id="next-week-btn" aria-label="Next week">&rarr;</button>
+      <div class="week-label" id="week-label"></div>
+      <button class="icon-btn" id="copy-prev-week-btn" title="Copy meals from the previous week into this view">Copy from previous week</button>
+    </div>
+
     <div id="week-banner-slot"></div>
     <div class="week" id="week-grid"></div>
+
     <div class="section-h" id="week-meal-picker-h" style="display:none;">Pick a meal for <span id="picker-day-label"></span></div>
     <input type="text" class="picker-search" id="week-meal-search" placeholder="Type to search, Enter to pick the highlighted meal..." style="display:none;" />
     <div class="filter-row" id="week-tag-filters" style="display:none;"></div>
     <div class="meal-grid" id="week-meal-grid" style="display:none;"></div>
+
     <div class="action-bar" style="margin-top: 1rem;">
       <button class="icon-btn" id="clear-week">Clear week</button>
     </div>
@@ -254,12 +295,8 @@
       <div class="form-row">
         <input type="text" id="form-meal-name" placeholder="Meal name" />
         <select id="form-meal-tag">
-          <option value="Chicken">Chicken</option>
-          <option value="Beef">Beef</option>
-          <option value="Pork">Pork</option>
-          <option value="Seafood">Seafood</option>
-          <option value="Pasta">Pasta</option>
-          <option value="Other">Other</option>
+          <option value="Chicken">Chicken</option><option value="Beef">Beef</option><option value="Pork">Pork</option>
+          <option value="Seafood">Seafood</option><option value="Pasta">Pasta</option><option value="Other">Other</option>
         </select>
       </div>
       <div style="font-size: 12px; color: var(--text-secondary); margin: 8px 0;">Ingredients</div>
@@ -273,15 +310,35 @@
 
     <div id="library-list"></div>
   </div>
+
+  <div id="pane-stats" class="pane">
+    <div id="stats-content"></div>
+  </div>
 </div>
 
 <input type="file" id="import-file" accept="application/json" style="display: none;" />
+
+<!-- Location modal -->
+<div id="location-modal" class="modal-backdrop" style="display:none;">
+  <div class="modal">
+    <h3>Set weather location</h3>
+    <p>Type a postcode or suburb name. Pick the matching result, or click Save with no result selected to use Sydney as the default.</p>
+    <div class="autocomplete">
+      <input type="text" id="loc-search" placeholder="e.g. 2010, Surry Hills, Melbourne..." autocomplete="off" />
+      <div id="loc-results" class="autocomplete-list" style="display:none;"></div>
+    </div>
+    <div style="font-size: 13px; color: var(--text-secondary); margin: 8px 0 1rem;" id="loc-status"></div>
+    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+      <button class="icon-btn" id="loc-cancel-btn">Cancel</button>
+      <button class="icon-btn primary" id="loc-save-btn">Save</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://xyopoilevujzyknuqgfh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_1vQpgaAQGezUUhOfbB9ndw_GuYuxs5M';
-
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let CURRENT_USER = null;
@@ -293,9 +350,7 @@ const storage = {
   async loadAll() {
     if (!CURRENT_USER) return;
     const { data, error } = await supabaseClient
-      .from('user_data')
-      .select('key, value')
-      .eq('user_id', CURRENT_USER.id);
+      .from('user_data').select('key, value').eq('user_id', CURRENT_USER.id);
     if (error) { console.error('Load error', error); return; }
     this.cache = {};
     (data || []).forEach(row => { this.cache[row.key] = row.value; });
@@ -307,12 +362,11 @@ const storage = {
     flashSync('Saving...');
     const { error } = await supabaseClient
       .from('user_data')
-      .upsert({ user_id: CURRENT_USER.id, key: key, value: value, updated_at: new Date().toISOString() }, { onConflict: 'user_id,key' });
+      .upsert({ user_id: CURRENT_USER.id, key, value, updated_at: new Date().toISOString() }, { onConflict: 'user_id,key' });
     if (error) { console.error('Save error', error); flashSync('Save failed', true); return false; }
-    flashSync('Synced');
-    return true;
+    flashSync('Synced'); return true;
   },
-  exportAll() { return { version: 2, exportedAt: new Date().toISOString(), data: { ...this.cache } }; },
+  exportAll() { return { version: 3, exportedAt: new Date().toISOString(), data: { ...this.cache } }; },
   async importAll(payload) {
     if (!payload || !payload.data) throw new Error('Invalid import file');
     for (const [k, v] of Object.entries(payload.data)) await this.set(k, v);
@@ -326,9 +380,7 @@ function flashSync(msg, isError) {
   el.textContent = msg;
   el.style.color = isError ? 'var(--text-danger)' : '';
   clearTimeout(syncTimer);
-  if (msg !== 'Saving...') {
-    syncTimer = setTimeout(() => { el.textContent = 'Synced'; el.style.color = ''; }, 1200);
-  }
+  if (msg !== 'Saving...') syncTimer = setTimeout(() => { el.textContent = 'Synced'; el.style.color = ''; }, 1200);
 }
 
 const MEASURES = ['Unit', 'Pack', 'Can', 'Bottle', 'Bag', 'Pinch', 'Handful', 'Cup (c)', 'Gram (g)', 'Kilogram (kg)', 'Milliliter (ml)', 'Liter (L)', 'Tablespoon (Tbsp)', 'Teaspoon (tsp)'];
@@ -384,19 +436,12 @@ const SEED_MEALS = [
   { name: 'Osso Buco', tag: 'Beef', ingredients: [['Osso Buco',1,'Unit'],['Onion',1,'Unit'],['Carrot',1,'Unit'],['Canned tomatoes',2,'Unit'],['White Wine',1,'Unit'],['Potato',4,'Unit']] }
 ];
 
-const STATE = {
-  meals: [], selected: new Set(), weekPlan: {},
-  activeTag: 'All', weekTag: 'All', activeTab: 'week',
-  checkedItems: new Set(), librarySearch: '',
-  formMode: null, formIngredients: [], editingMealName: null,
-  pickingForDay: null,
-  pickerSearch: '',
-  pickerFiltered: [],
-  weather: null,
-  location: null
-};
-
-/* Date helpers: week starts Monday */
+/* ======================================================================
+   DATE HELPERS
+   weekPlan is now keyed by ISO date (e.g. '2026-05-11': 'Beef Stew').
+   Each day cell renders with its real date. STATE.viewWeekStart tracks
+   which week is being viewed (always a Monday).
+====================================================================== */
 function startOfWeek(d) {
   const date = new Date(d);
   date.setHours(0, 0, 0, 0);
@@ -405,67 +450,51 @@ function startOfWeek(d) {
   date.setDate(date.getDate() + diff);
   return date;
 }
-function getWeekDates() {
-  const monday = startOfWeek(new Date());
-  return DAYS.map((_, i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    return d;
-  });
-}
-function isSameDay(a, b) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-}
-function fmtDayDate(d) {
-  return d.getDate() + ' ' + d.toLocaleString('en-AU', { month: 'short' });
-}
-function isoDate(d) {
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function addWeeks(d, n) { return addDays(d, n * 7); }
+function isoDate(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function isSameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+function fmtDayDate(d) { return d.getDate() + ' ' + d.toLocaleString('en-AU', { month: 'short' }); }
+function fmtLongDate(d) { return d.toLocaleString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }); }
+function getWeekDates(weekStart) {
+  return DAYS.map((_, i) => addDays(weekStart, i));
 }
 
-/* Weather: Open-Meteo, free, no key. Maps WMO codes to small label + emoji icon. */
+/* ======================================================================
+   WEATHER
+====================================================================== */
 const WEATHER_ICONS = {
-  0: { icon: '\u2600\ufe0f', label: 'Clear' },
-  1: { icon: '\ud83c\udf24\ufe0f', label: 'Mostly clear' },
-  2: { icon: '\u26c5', label: 'Partly cloudy' },
-  3: { icon: '\u2601\ufe0f', label: 'Cloudy' },
-  45: { icon: '\ud83c\udf2b\ufe0f', label: 'Foggy' },
-  48: { icon: '\ud83c\udf2b\ufe0f', label: 'Foggy' },
-  51: { icon: '\ud83c\udf26\ufe0f', label: 'Drizzle' },
-  53: { icon: '\ud83c\udf26\ufe0f', label: 'Drizzle' },
-  55: { icon: '\ud83c\udf26\ufe0f', label: 'Drizzle' },
-  61: { icon: '\ud83c\udf27\ufe0f', label: 'Rain' },
-  63: { icon: '\ud83c\udf27\ufe0f', label: 'Rain' },
-  65: { icon: '\ud83c\udf27\ufe0f', label: 'Heavy rain' },
-  71: { icon: '\ud83c\udf28\ufe0f', label: 'Snow' },
-  73: { icon: '\ud83c\udf28\ufe0f', label: 'Snow' },
-  75: { icon: '\ud83c\udf28\ufe0f', label: 'Heavy snow' },
-  80: { icon: '\ud83c\udf26\ufe0f', label: 'Showers' },
-  81: { icon: '\ud83c\udf27\ufe0f', label: 'Showers' },
-  82: { icon: '\ud83c\udf27\ufe0f', label: 'Heavy showers' },
-  95: { icon: '\u26c8\ufe0f', label: 'Storm' },
-  96: { icon: '\u26c8\ufe0f', label: 'Storm' },
-  99: { icon: '\u26c8\ufe0f', label: 'Storm' }
+  0: { icon: '\u2600\ufe0f', label: 'Clear' }, 1: { icon: '\ud83c\udf24\ufe0f', label: 'Mostly clear' },
+  2: { icon: '\u26c5', label: 'Partly cloudy' }, 3: { icon: '\u2601\ufe0f', label: 'Cloudy' },
+  45: { icon: '\ud83c\udf2b\ufe0f', label: 'Foggy' }, 48: { icon: '\ud83c\udf2b\ufe0f', label: 'Foggy' },
+  51: { icon: '\ud83c\udf26\ufe0f', label: 'Drizzle' }, 53: { icon: '\ud83c\udf26\ufe0f', label: 'Drizzle' }, 55: { icon: '\ud83c\udf26\ufe0f', label: 'Drizzle' },
+  61: { icon: '\ud83c\udf27\ufe0f', label: 'Rain' }, 63: { icon: '\ud83c\udf27\ufe0f', label: 'Rain' }, 65: { icon: '\ud83c\udf27\ufe0f', label: 'Heavy rain' },
+  71: { icon: '\ud83c\udf28\ufe0f', label: 'Snow' }, 73: { icon: '\ud83c\udf28\ufe0f', label: 'Snow' }, 75: { icon: '\ud83c\udf28\ufe0f', label: 'Heavy snow' },
+  80: { icon: '\ud83c\udf26\ufe0f', label: 'Showers' }, 81: { icon: '\ud83c\udf27\ufe0f', label: 'Showers' }, 82: { icon: '\ud83c\udf27\ufe0f', label: 'Heavy showers' },
+  95: { icon: '\u26c8\ufe0f', label: 'Storm' }, 96: { icon: '\u26c8\ufe0f', label: 'Storm' }, 99: { icon: '\u26c8\ufe0f', label: 'Storm' }
 };
 function weatherFor(code) { return WEATHER_ICONS[code] || { icon: '', label: '' }; }
-
-/* Default location: Sydney CBD. Override per-user via gear menu (postcode). */
 const DEFAULT_LOCATION = { name: 'Sydney', lat: -33.8688, lon: 151.2093 };
 
-async function lookupPostcode(postcode) {
-  // Open-Meteo geocoding handles AU postcodes pretty well
-  const url = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(postcode) + '&country=AU&count=1';
+async function geocodeSearch(query) {
+  if (!query || query.trim().length < 2) return [];
+  const url = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(query.trim()) + '&country=AU&count=8&language=en';
   const res = await fetch(url);
-  if (!res.ok) throw new Error('Geocoding failed');
+  if (!res.ok) return [];
   const data = await res.json();
-  if (!data.results || !data.results.length) throw new Error('Postcode not found');
-  const r = data.results[0];
-  return { name: r.name, lat: r.latitude, lon: r.longitude, postcode: postcode };
+  return (data.results || []).map(r => ({
+    name: r.name,
+    admin1: r.admin1 || '',
+    admin2: r.admin2 || '',
+    postcode: r.postcodes && r.postcodes[0] ? r.postcodes[0] : '',
+    lat: r.latitude,
+    lon: r.longitude
+  }));
 }
 
 async function fetchWeather(loc) {
   const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + loc.lat + '&longitude=' + loc.lon +
-    '&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=7';
+    '&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=14';
   const res = await fetch(url);
   if (!res.ok) throw new Error('Weather fetch failed');
   return res.json();
@@ -478,17 +507,36 @@ async function loadWeather() {
     if (!data || !data.daily) return;
     STATE.weather = {};
     data.daily.time.forEach((iso, i) => {
-      STATE.weather[iso] = {
-        code: data.daily.weather_code[i],
-        max: Math.round(data.daily.temperature_2m_max[i]),
-        min: Math.round(data.daily.temperature_2m_min[i])
-      };
+      STATE.weather[iso] = { code: data.daily.weather_code[i], max: Math.round(data.daily.temperature_2m_max[i]), min: Math.round(data.daily.temperature_2m_min[i]) };
     });
     if (STATE.activeTab === 'week') renderWeekGrid();
-  } catch (e) {
-    console.warn('Weather load failed', e);
-  }
+  } catch (e) { console.warn('Weather load failed', e); }
 }
+
+/* ======================================================================
+   APP STATE
+====================================================================== */
+const STATE = {
+  meals: [],
+  selected: new Set(),
+  weekPlan: {},          // { '2026-05-11': 'Beef Stew', ... } — single source of truth
+  unlockedDates: new Set(), // dates the user has explicitly unlocked for editing past entries
+  activeTag: 'All',
+  weekTag: 'All',
+  activeTab: 'week',
+  checkedItems: new Set(),
+  librarySearch: '',
+  formMode: null,
+  formIngredients: [],
+  editingMealName: null,
+  pickingForDate: null,
+  pickingForDayName: null,
+  pickerSearch: '',
+  pickerFiltered: [],
+  weather: null,
+  location: null,
+  viewWeekStart: startOfWeek(new Date())
+};
 
 async function loadState() {
   await storage.loadAll();
@@ -496,8 +544,28 @@ async function loadState() {
   STATE.meals = meals != null ? meals : SEED_MEALS.slice();
   STATE.selected = new Set(storage.get('selected') || []);
   STATE.checkedItems = new Set(storage.get('checked') || []);
-  STATE.weekPlan = storage.get('weekPlan') || {};
   STATE.location = storage.get('location') || null;
+
+  // Load weekPlan and migrate old { Monday: ... } format to { iso-date: ... } if needed
+  const rawPlan = storage.get('weekPlan');
+  if (rawPlan && typeof rawPlan === 'object') {
+    const keys = Object.keys(rawPlan);
+    const isOldFormat = keys.length && keys.every(k => DAYS.includes(k));
+    if (isOldFormat) {
+      const monday = startOfWeek(new Date());
+      const migrated = {};
+      DAYS.forEach((dn, i) => {
+        if (rawPlan[dn]) migrated[isoDate(addDays(monday, i))] = rawPlan[dn];
+      });
+      STATE.weekPlan = migrated;
+      await storage.set('weekPlan', migrated);
+    } else {
+      STATE.weekPlan = rawPlan;
+    }
+  } else {
+    STATE.weekPlan = {};
+  }
+
   if (meals == null) await storage.set('meals', STATE.meals);
 }
 function saveMeals() { return storage.set('meals', STATE.meals); }
@@ -506,26 +574,58 @@ function saveChecked() { return storage.set('checked', [...STATE.checkedItems]);
 function saveWeekPlan() { return storage.set('weekPlan', STATE.weekPlan); }
 function saveLocation() { return storage.set('location', STATE.location); }
 
+/* ======================================================================
+   PAST/PRESENT/FUTURE HELPERS
+   The week plan is the single source of truth. Past dates are read-only
+   by default but can be unlocked per-day for editing.
+====================================================================== */
+function todayKey() { return isoDate(new Date()); }
+function isPastDate(dateKey) { return dateKey < todayKey(); }
+
+/* ======================================================================
+   RENDERERS
+====================================================================== */
 function renderTabs() {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === STATE.activeTab));
   document.querySelectorAll('.pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + STATE.activeTab));
 }
 
+function renderWeekLabel() {
+  const start = STATE.viewWeekStart;
+  const end = addDays(start, 6);
+  const thisMonday = startOfWeek(new Date());
+  const diffWeeks = Math.round((start - thisMonday) / (7 * 24 * 60 * 60 * 1000));
+  let sub = '';
+  if (diffWeeks === 0) sub = '(this week)';
+  else if (diffWeeks === 1) sub = '(next week)';
+  else if (diffWeeks === -1) sub = '(last week)';
+  else if (diffWeeks > 1) sub = '(' + diffWeeks + ' weeks ahead)';
+  else sub = '(' + Math.abs(diffWeeks) + ' weeks ago)';
+
+  const label = fmtLongDate(start) + ' to ' + fmtLongDate(end);
+  document.getElementById('week-label').innerHTML = label + ' <span class="week-sub">' + sub + '</span>';
+}
+
 function renderWeekGrid() {
+  renderWeekLabel();
   const grid = document.getElementById('week-grid');
   grid.innerHTML = '';
-  const dates = getWeekDates();
+  const dates = getWeekDates(STATE.viewWeekStart);
   const today = new Date();
   DAYS.forEach((day, idx) => {
-    const cell = document.createElement('div');
-    cell.className = 'day' + (STATE.pickingForDay === day ? ' targeting' : '');
-
     const date = dates[idx];
+    const dateKey = isoDate(date);
+    const isPast = isPastDate(dateKey);
+    const isUnlocked = STATE.unlockedDates.has(dateKey);
+    const isLocked = isPast && !isUnlocked;
+
+    const cell = document.createElement('div');
+    cell.className = 'day' + (STATE.pickingForDate === dateKey ? ' targeting' : '') + (isLocked ? ' locked' : '');
+
     const isToday = isSameDay(date, today);
 
     const header = document.createElement('div');
     header.className = 'day-header';
-
     const labelWrap = document.createElement('div');
     labelWrap.className = 'day-label';
     const dayName = document.createElement('div');
@@ -539,23 +639,28 @@ function renderWeekGrid() {
     header.appendChild(labelWrap);
 
     if (STATE.weather) {
-      const wx = STATE.weather[isoDate(date)];
+      const wx = STATE.weather[dateKey];
       if (wx) {
         const wxEl = document.createElement('div');
         wxEl.className = 'day-weather';
         wxEl.title = weatherFor(wx.code).label + ', ' + wx.min + ' to ' + wx.max + ' degrees';
-        wxEl.innerHTML = '<span class="wx-icon">' + weatherFor(wx.code).icon + '</span>' +
-          '<span>' + wx.max + '\u00b0</span>';
+        wxEl.innerHTML = '<span class="wx-icon">' + weatherFor(wx.code).icon + '</span><span>' + wx.max + '\u00b0</span>';
         header.appendChild(wxEl);
       }
     }
     cell.appendChild(header);
 
-    const mealName = STATE.weekPlan[day];
+    const mealName = STATE.weekPlan[dateKey];
     const mealText = document.createElement('div');
-    mealText.className = 'day-meal' + (mealName ? '' : ' empty');
-    mealText.textContent = mealName || '+ add meal';
+    if (mealName) {
+      mealText.className = 'day-meal';
+      mealText.textContent = mealName;
+    } else {
+      mealText.className = 'day-meal empty';
+      mealText.textContent = isLocked ? '(no meal recorded)' : '+ add meal';
+    }
     cell.appendChild(mealText);
+
     if (mealName) {
       const meal = STATE.meals.find(m => m.name === mealName);
       if (meal) {
@@ -564,23 +669,43 @@ function renderWeekGrid() {
         tag.textContent = meal.tag;
         cell.appendChild(tag);
       }
-      const clear = document.createElement('button');
-      clear.className = 'day-clear';
-      clear.type = 'button';
-      clear.textContent = 'remove';
-      clear.onclick = (e) => {
+      if (!isLocked) {
+        const clear = document.createElement('button');
+        clear.className = 'day-clear';
+        clear.type = 'button';
+        clear.textContent = 'remove';
+        clear.onclick = (e) => {
+          e.stopPropagation();
+          delete STATE.weekPlan[dateKey];
+          saveWeekPlan();
+          renderWeekGrid();
+        };
+        cell.appendChild(clear);
+      }
+    }
+
+    if (isLocked) {
+      const editBtn = document.createElement('button');
+      editBtn.className = 'day-clear day-edit';
+      editBtn.type = 'button';
+      editBtn.textContent = 'edit';
+      editBtn.title = 'Edit this past entry';
+      editBtn.onclick = (e) => {
         e.stopPropagation();
-        delete STATE.weekPlan[day];
-        saveWeekPlan();
+        STATE.unlockedDates.add(dateKey);
         renderWeekGrid();
       };
-      cell.appendChild(clear);
+      cell.appendChild(editBtn);
     }
+
     cell.onclick = () => {
-      if (STATE.pickingForDay === day) {
-        STATE.pickingForDay = null;
+      if (isLocked) return; // locked past day, must click Edit first
+      if (STATE.pickingForDate === dateKey) {
+        STATE.pickingForDate = null;
+        STATE.pickingForDayName = null;
       } else {
-        STATE.pickingForDay = day;
+        STATE.pickingForDate = dateKey;
+        STATE.pickingForDayName = day;
         STATE.pickerSearch = '';
       }
       renderWeekGrid();
@@ -591,9 +716,12 @@ function renderWeekGrid() {
 }
 
 function assignMealToPickingDay(mealName) {
-  if (!STATE.pickingForDay) return;
-  STATE.weekPlan[STATE.pickingForDay] = mealName;
-  STATE.pickingForDay = null;
+  if (!STATE.pickingForDate) return;
+  const dateKey = STATE.pickingForDate;
+  const dayName = STATE.pickingForDayName;
+  STATE.weekPlan[dateKey] = mealName;
+  STATE.pickingForDate = null;
+  STATE.pickingForDayName = null;
   STATE.pickerSearch = '';
   saveWeekPlan();
   renderWeekGrid();
@@ -607,7 +735,7 @@ function renderWeekPicker() {
   const filters = document.getElementById('week-tag-filters');
   const grid = document.getElementById('week-meal-grid');
 
-  if (!STATE.pickingForDay) {
+  if (!STATE.pickingForDate) {
     banner.innerHTML = '';
     headerH.style.display = 'none';
     searchInput.style.display = 'none';
@@ -619,14 +747,16 @@ function renderWeekPicker() {
   banner.innerHTML = '';
   const b = document.createElement('div');
   b.className = 'banner';
+  const dateLabel = fmtLongDate(new Date(STATE.pickingForDate + 'T00:00:00'));
   const span = document.createElement('span');
-  span.innerHTML = 'Type to search, click a meal, or press Enter to pick the highlighted one for <strong>' + STATE.pickingForDay + '</strong>.';
+  span.innerHTML = 'Type to search, click or press Enter to pick a meal for <strong>' + dateLabel + '</strong>.';
   b.appendChild(span);
   const cancelBtn = document.createElement('button');
   cancelBtn.className = 'banner-cancel';
   cancelBtn.textContent = 'Cancel';
   cancelBtn.onclick = () => {
-    STATE.pickingForDay = null;
+    STATE.pickingForDate = null;
+    STATE.pickingForDayName = null;
     STATE.pickerSearch = '';
     renderWeekGrid();
     renderWeekPicker();
@@ -634,7 +764,7 @@ function renderWeekPicker() {
   b.appendChild(cancelBtn);
   banner.appendChild(b);
 
-  document.getElementById('picker-day-label').textContent = STATE.pickingForDay;
+  document.getElementById('picker-day-label').textContent = dateLabel;
   headerH.style.display = '';
   searchInput.style.display = '';
   filters.style.display = '';
@@ -648,7 +778,7 @@ function renderWeekPicker() {
     const btn = document.createElement('button');
     btn.className = 'filter-btn' + (STATE.weekTag === tag ? ' active' : '');
     btn.textContent = tag;
-    btn.onmousedown = (e) => e.preventDefault(); // keep search input focused
+    btn.onmousedown = (e) => e.preventDefault();
     btn.onclick = () => { STATE.weekTag = tag; renderWeekPickerResults(); };
     filters.appendChild(btn);
   });
@@ -659,7 +789,6 @@ function renderWeekPicker() {
 function renderWeekPickerResults() {
   const grid = document.getElementById('week-meal-grid');
   grid.innerHTML = '';
-
   const q = STATE.pickerSearch.trim().toLowerCase();
   let filtered = STATE.weekTag === 'All' ? STATE.meals : STATE.meals.filter(m => m.tag === STATE.weekTag);
   if (q) {
@@ -676,7 +805,6 @@ function renderWeekPickerResults() {
     grid.innerHTML = '<div class="empty">' + (q ? 'No meals match "' + STATE.pickerSearch + '".' : 'No meals available. Add some in the Meal library tab first.') + '</div>';
     return;
   }
-
   filtered.forEach((meal, idx) => {
     const card = document.createElement('div');
     card.className = 'meal-card' + (idx === 0 && q ? ' first-match' : '');
@@ -710,10 +838,7 @@ function renderMealGrid() {
   const grid = document.getElementById('meal-grid');
   grid.innerHTML = '';
   const filtered = STATE.activeTag === 'All' ? STATE.meals : STATE.meals.filter(m => m.tag === STATE.activeTag);
-  if (!filtered.length) {
-    grid.innerHTML = '<div class="empty">No meals match this filter.</div>';
-    return;
-  }
+  if (!filtered.length) { grid.innerHTML = '<div class="empty">No meals match this filter.</div>'; return; }
   filtered.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach(meal => {
     const card = document.createElement('div');
     card.className = 'meal-card' + (STATE.selected.has(meal.name) ? ' selected' : '');
@@ -738,9 +863,11 @@ function renderMealGrid() {
 
 function updateSelectedCount() { document.getElementById('selected-count').textContent = STATE.selected.size; }
 
+/* Active grocery list = currently-viewed week + quick select */
 function getActiveMealNames() {
   const names = new Set([...STATE.selected]);
-  Object.values(STATE.weekPlan).forEach(n => { if (n) names.add(n); });
+  const dates = getWeekDates(STATE.viewWeekStart).map(isoDate);
+  dates.forEach(d => { if (STATE.weekPlan[d]) names.add(STATE.weekPlan[d]); });
   return names;
 }
 
@@ -768,10 +895,7 @@ function renderGrocery() {
   const wrap = document.getElementById('grocery-content');
   wrap.innerHTML = '';
   const activeMealNames = getActiveMealNames();
-  if (!activeMealNames.size) {
-    wrap.innerHTML = '<div class="empty">Add meals to days, or use Quick select.</div>';
-    return;
-  }
+  if (!activeMealNames.size) { wrap.innerHTML = '<div class="empty">Add meals to days, or use Quick select.</div>'; return; }
   const items = aggregateGroceries();
 
   const summary = document.createElement('div');
@@ -779,21 +903,23 @@ function renderGrocery() {
   summary.innerHTML =
     '<div><div class="stat-num">' + items.length + '</div><div class="stat-label">items</div></div>' +
     '<div><div class="stat-num">' + activeMealNames.size + '</div><div class="stat-label">meals</div></div>' +
-    '<div style="display:flex; gap:8px; flex-wrap:wrap;">' +
-    '<button class="icon-btn" id="copy-list">Copy for Keep</button>' +
-    '</div>';
+    '<div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="icon-btn" id="copy-list">Copy for Keep</button></div>';
   wrap.appendChild(summary);
 
-  if (Object.keys(STATE.weekPlan).length) {
+  const dates = getWeekDates(STATE.viewWeekStart);
+  const hasWeekMeals = dates.some(d => STATE.weekPlan[isoDate(d)]);
+  if (hasWeekMeals) {
     const wH = document.createElement('div');
     wH.className = 'section-h';
-    wH.textContent = 'This week';
+    wH.textContent = 'Week of ' + fmtLongDate(STATE.viewWeekStart);
     wrap.appendChild(wH);
     const wList = document.createElement('div');
     wList.style.cssText = 'font-size: 14px; margin-bottom: 1rem;';
-    wList.innerHTML = DAYS.filter(d => STATE.weekPlan[d]).map(d =>
-      '<div style="padding:2px 0;"><span style="color: var(--text-secondary); font-size: 12px; display: inline-block; width: 90px;">' + d + '</span>' + STATE.weekPlan[d] + '</div>'
-    ).join('');
+    wList.innerHTML = dates.map((d, i) => {
+      const meal = STATE.weekPlan[isoDate(d)];
+      if (!meal) return '';
+      return '<div style="padding:2px 0;"><span style="color: var(--text-secondary); font-size: 12px; display: inline-block; width: 130px;">' + DAYS[i] + ' ' + fmtDayDate(d) + '</span>' + meal + '</div>';
+    }).filter(Boolean).join('');
     wrap.appendChild(wList);
   }
 
@@ -812,13 +938,11 @@ function renderGrocery() {
   copyH.className = 'section-h';
   copyH.textContent = 'Copy and paste into Google Keep';
   wrap.appendChild(copyH);
-
   const ta = document.createElement('textarea');
   ta.className = 'copy-area';
   ta.id = 'copy-textarea';
   ta.value = buildCopyText(items);
   wrap.appendChild(ta);
-
   const hint = document.createElement('div');
   hint.style.cssText = 'font-size: 12px; color: var(--text-secondary); margin-top: 6px; margin-bottom: 1rem;';
   hint.textContent = 'Tip: in Keep, paste into a new note, then use the menu to convert to checkboxes.';
@@ -841,19 +965,13 @@ function renderGrocery() {
     cb.onchange = () => {
       if (cb.checked) STATE.checkedItems.add(key);
       else STATE.checkedItems.delete(key);
-      saveChecked();
-      renderGrocery();
+      saveChecked(); renderGrocery();
     };
-    const nameSpan = document.createElement('span');
-    nameSpan.className = 'grocery-name';
-    nameSpan.textContent = it.name;
-    const qtySpan = document.createElement('span');
-    qtySpan.className = 'grocery-qty';
+    const nameSpan = document.createElement('span'); nameSpan.className = 'grocery-name'; nameSpan.textContent = it.name;
+    const qtySpan = document.createElement('span'); qtySpan.className = 'grocery-qty';
     const amt = Math.round(it.amount * 100) / 100;
     qtySpan.textContent = amt + ' ' + it.measure;
-    row.appendChild(cb);
-    row.appendChild(nameSpan);
-    row.appendChild(qtySpan);
+    row.appendChild(cb); row.appendChild(nameSpan); row.appendChild(qtySpan);
     list.appendChild(row);
   });
   wrap.appendChild(list);
@@ -863,23 +981,14 @@ function renderGrocery() {
   tickActions.innerHTML = '<button class="icon-btn" id="reset-checks">Uncheck all</button>';
   wrap.appendChild(tickActions);
 
-  document.getElementById('reset-checks').onclick = () => {
-    STATE.checkedItems.clear();
-    saveChecked();
-    renderGrocery();
-  };
+  document.getElementById('reset-checks').onclick = () => { STATE.checkedItems.clear(); saveChecked(); renderGrocery(); };
   document.getElementById('copy-list').onclick = () => {
     const text = buildCopyText(items);
     navigator.clipboard.writeText(text).then(() => {
       const btn = document.getElementById('copy-list');
-      const orig = btn.textContent;
-      btn.textContent = 'Copied!';
+      const orig = btn.textContent; btn.textContent = 'Copied!';
       setTimeout(() => btn.textContent = orig, 1500);
-    }).catch(() => {
-      const tta = document.getElementById('copy-textarea');
-      tta.select();
-      document.execCommand('copy');
-    });
+    }).catch(() => { document.getElementById('copy-textarea').select(); document.execCommand('copy'); });
   };
 }
 
@@ -898,34 +1007,20 @@ function renderLibrary() {
     card.className = 'library-card';
     const head = document.createElement('div');
     head.style.cssText = 'display: flex; align-items: center; gap: 10px;';
-    const nameEl = document.createElement('span');
-    nameEl.className = 'meal-name';
-    nameEl.textContent = meal.name;
-    const tagEl = document.createElement('span');
-    tagEl.className = 'tag-pill';
-    tagEl.textContent = meal.tag;
-    head.appendChild(nameEl);
-    head.appendChild(tagEl);
-    const editBtn = document.createElement('button');
-    editBtn.className = 'icon-btn';
-    editBtn.textContent = 'Edit';
+    const nameEl = document.createElement('span'); nameEl.className = 'meal-name'; nameEl.textContent = meal.name;
+    const tagEl = document.createElement('span'); tagEl.className = 'tag-pill'; tagEl.textContent = meal.tag;
+    head.appendChild(nameEl); head.appendChild(tagEl);
+    const editBtn = document.createElement('button'); editBtn.className = 'icon-btn'; editBtn.textContent = 'Edit';
     editBtn.onclick = () => startEditMeal(meal.name);
     head.appendChild(editBtn);
-    const delBtn = document.createElement('button');
-    delBtn.className = 'icon-btn danger';
-    delBtn.textContent = 'Delete';
+    const delBtn = document.createElement('button'); delBtn.className = 'icon-btn danger'; delBtn.textContent = 'Delete';
     delBtn.onclick = () => {
       if (confirm('Delete "' + meal.name + '"?')) {
         STATE.meals = STATE.meals.filter(m => m.name !== meal.name);
         STATE.selected.delete(meal.name);
         Object.keys(STATE.weekPlan).forEach(d => { if (STATE.weekPlan[d] === meal.name) delete STATE.weekPlan[d]; });
-        saveMeals();
-        saveSelected();
-        saveWeekPlan();
-        renderLibrary();
-        renderMealGrid();
-        renderWeekGrid();
-        updateSelectedCount();
+        saveMeals(); saveSelected(); saveWeekPlan();
+        renderLibrary(); renderMealGrid(); renderWeekGrid(); updateSelectedCount();
       }
     };
     head.appendChild(delBtn);
@@ -944,40 +1039,27 @@ function renderFormIngredients() {
   STATE.formIngredients.forEach((ing, idx) => {
     const row = document.createElement('div');
     row.className = 'ing-line';
-    const nameI = document.createElement('input');
-    nameI.type = 'text';
-    nameI.placeholder = 'Ingredient';
-    nameI.value = ing.name || '';
+    const nameI = document.createElement('input'); nameI.type = 'text'; nameI.placeholder = 'Ingredient'; nameI.value = ing.name || '';
     nameI.oninput = (e) => { STATE.formIngredients[idx].name = e.target.value; };
-    const amtI = document.createElement('input');
-    amtI.type = 'number';
-    amtI.step = '0.5';
-    amtI.placeholder = 'Qty';
+    const amtI = document.createElement('input'); amtI.type = 'number'; amtI.step = '0.5'; amtI.placeholder = 'Qty';
     amtI.value = ing.amount != null ? ing.amount : '';
     amtI.oninput = (e) => { STATE.formIngredients[idx].amount = parseFloat(e.target.value) || 0; };
     const meaS = document.createElement('select');
     MEASURES.forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m; opt.textContent = m;
+      const opt = document.createElement('option'); opt.value = m; opt.textContent = m;
       if (ing.measure === m) opt.selected = true;
       meaS.appendChild(opt);
     });
     meaS.onchange = (e) => { STATE.formIngredients[idx].measure = e.target.value; };
-    const rmB = document.createElement('button');
-    rmB.className = 'icon-btn danger';
-    rmB.textContent = '\u00d7';
+    const rmB = document.createElement('button'); rmB.className = 'icon-btn danger'; rmB.textContent = '\u00d7';
     rmB.onclick = () => { STATE.formIngredients.splice(idx, 1); renderFormIngredients(); };
-    row.appendChild(nameI);
-    row.appendChild(amtI);
-    row.appendChild(meaS);
-    row.appendChild(rmB);
+    row.appendChild(nameI); row.appendChild(amtI); row.appendChild(meaS); row.appendChild(rmB);
     list.appendChild(row);
   });
 }
 
 function startAddMeal() {
-  STATE.formMode = 'add';
-  STATE.editingMealName = null;
+  STATE.formMode = 'add'; STATE.editingMealName = null;
   STATE.formIngredients = [{ name: '', amount: 1, measure: 'Unit' }];
   document.getElementById('meal-form').style.display = 'block';
   document.getElementById('form-title').textContent = 'Add meal';
@@ -989,8 +1071,7 @@ function startAddMeal() {
 function startEditMeal(mealName) {
   const meal = STATE.meals.find(m => m.name === mealName);
   if (!meal) return;
-  STATE.formMode = 'edit';
-  STATE.editingMealName = mealName;
+  STATE.formMode = 'edit'; STATE.editingMealName = mealName;
   STATE.formIngredients = meal.ingredients.map(([name, amount, measure]) => ({ name, amount, measure }));
   document.getElementById('meal-form').style.display = 'block';
   document.getElementById('form-title').textContent = 'Edit "' + mealName + '"';
@@ -1001,8 +1082,7 @@ function startEditMeal(mealName) {
 }
 
 function cancelForm() {
-  STATE.formMode = null;
-  STATE.editingMealName = null;
+  STATE.formMode = null; STATE.editingMealName = null;
   document.getElementById('meal-form').style.display = 'none';
 }
 
@@ -1031,12 +1111,170 @@ async function saveForm() {
   }
   await saveMeals();
   cancelForm();
-  renderLibrary();
-  renderMealGrid();
-  renderWeekGrid();
-  updateSelectedCount();
+  renderLibrary(); renderMealGrid(); renderWeekGrid(); updateSelectedCount();
 }
 
+/* ======================================================================
+   STATS
+====================================================================== */
+/* Stats are derived from past entries in weekPlan only. */
+function getPastEntries() {
+  const today = todayKey();
+  return Object.entries(STATE.weekPlan)
+    .filter(([d, m]) => d < today && m)
+    .map(([date, meal]) => {
+      const date_ = new Date(date + 'T00:00:00');
+      const dayIdx = (date_.getDay() + 6) % 7; // Mon=0
+      const m = STATE.meals.find(mm => mm.name === meal);
+      return { date, dayName: DAYS[dayIdx], meal, tag: m ? m.tag : '' };
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function renderStats() {
+  const wrap = document.getElementById('stats-content');
+  wrap.innerHTML = '';
+
+  const past = getPastEntries();
+  if (!past.length) {
+    wrap.innerHTML = '<div class="empty">No meal history yet. Once a planned day passes, it shows up here.</div>';
+    return;
+  }
+
+  const total = past.length;
+  const uniqueMeals = new Set(past.map(h => h.meal)).size;
+  const days = new Set(past.map(h => h.date)).size;
+  const oldestDate = past[0].date;
+
+  const grid = document.createElement('div');
+  grid.className = 'stat-grid';
+  grid.innerHTML =
+    '<div class="stat-card"><div class="stat-card-num">' + total + '</div><div class="stat-card-label">meals eaten</div></div>' +
+    '<div class="stat-card"><div class="stat-card-num">' + uniqueMeals + '</div><div class="stat-card-label">distinct meals</div></div>' +
+    '<div class="stat-card"><div class="stat-card-num">' + days + '</div><div class="stat-card-label">days tracked</div></div>' +
+    '<div class="stat-card"><div class="stat-card-num" style="font-size:14px; line-height:1.5;">' + fmtLongDate(new Date(oldestDate + 'T00:00:00')) + '</div><div class="stat-card-label">tracking since</div></div>';
+  wrap.appendChild(grid);
+
+  // Top meals
+  const counts = {};
+  past.forEach(h => { counts[h.meal] = (counts[h.meal] || 0) + 1; });
+  const sortedMeals = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const topMeals = sortedMeals.slice(0, 10);
+
+  const topH = document.createElement('div'); topH.className = 'section-h'; topH.textContent = 'Top meals';
+  wrap.appendChild(topH);
+  topMeals.forEach(([meal, count]) => {
+    const row = document.createElement('div'); row.className = 'ranked-row';
+    const name = document.createElement('span'); name.className = 'rank-name'; name.textContent = meal;
+    const c = document.createElement('span'); c.className = 'rank-count'; c.textContent = count + (count === 1 ? ' time' : ' times');
+    row.appendChild(name); row.appendChild(c);
+    wrap.appendChild(row);
+  });
+
+  // Least picked (only meals you've had at least once)
+  const leastMeals = sortedMeals.slice().sort((a, b) => a[1] - b[1]).slice(0, 10);
+  if (leastMeals.length > 1) {
+    const leastH = document.createElement('div'); leastH.className = 'section-h'; leastH.textContent = 'Least picked';
+    wrap.appendChild(leastH);
+    leastMeals.forEach(([meal, count]) => {
+      const row = document.createElement('div'); row.className = 'ranked-row';
+      const name = document.createElement('span'); name.className = 'rank-name'; name.textContent = meal;
+      const c = document.createElement('span'); c.className = 'rank-count'; c.textContent = count + (count === 1 ? ' time' : ' times');
+      row.appendChild(name); row.appendChild(c);
+      wrap.appendChild(row);
+    });
+  }
+
+  // Top 5 longest since last picked
+  const lastSeen = {};
+  past.forEach(h => {
+    if (!lastSeen[h.meal] || h.date > lastSeen[h.meal]) lastSeen[h.meal] = h.date;
+  });
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const longestNotPicked = Object.entries(lastSeen)
+    .map(([meal, date]) => {
+      const d = new Date(date + 'T00:00:00');
+      const days = Math.floor((today - d) / (24 * 60 * 60 * 1000));
+      return { meal, date, days };
+    })
+    .sort((a, b) => b.days - a.days)
+    .slice(0, 5);
+
+  if (longestNotPicked.length) {
+    const longH = document.createElement('div'); longH.className = 'section-h'; longH.textContent = 'Longest since last picked';
+    wrap.appendChild(longH);
+    longestNotPicked.forEach(item => {
+      const row = document.createElement('div'); row.className = 'ranked-row';
+      const name = document.createElement('span'); name.className = 'rank-name'; name.textContent = item.meal;
+      const c = document.createElement('span'); c.className = 'rank-count';
+      const dateD = new Date(item.date + 'T00:00:00');
+      c.textContent = item.days + (item.days === 1 ? ' day' : ' days') + ' (last: ' + fmtDayDate(dateD) + ')';
+      row.appendChild(name); row.appendChild(c);
+      wrap.appendChild(row);
+    });
+  }
+
+  // Tag breakdown
+  const tagCounts = {};
+  past.forEach(h => { if (h.tag) tagCounts[h.tag] = (tagCounts[h.tag] || 0) + 1; });
+  const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
+  if (sortedTags.length) {
+    const tagH = document.createElement('div'); tagH.className = 'section-h'; tagH.textContent = 'By category';
+    wrap.appendChild(tagH);
+    sortedTags.forEach(([tag, count]) => {
+      const pct = Math.round((count / total) * 100);
+      const row = document.createElement('div'); row.className = 'ranked-row';
+      const name = document.createElement('span'); name.className = 'rank-name'; name.textContent = tag;
+      const c = document.createElement('span'); c.className = 'rank-count'; c.textContent = count + ' (' + pct + '%)';
+      row.appendChild(name); row.appendChild(c);
+      wrap.appendChild(row);
+    });
+  }
+
+  const actionsH = document.createElement('div'); actionsH.className = 'section-h'; actionsH.textContent = 'Data';
+  wrap.appendChild(actionsH);
+  const actions = document.createElement('div');
+  actions.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem;';
+  actions.innerHTML = '<button class="icon-btn" id="download-history-csv">Download as CSV</button>';
+  wrap.appendChild(actions);
+
+  const histH = document.createElement('div'); histH.className = 'section-h'; histH.textContent = 'Full history';
+  wrap.appendChild(histH);
+  const table = document.createElement('table'); table.className = 'history-table';
+  table.innerHTML = '<thead><tr><th>Date</th><th>Day</th><th>Meal</th><th>Tag</th></tr></thead>';
+  const tbody = document.createElement('tbody');
+  past.slice().reverse().forEach(h => {
+    const tr = document.createElement('tr');
+    const dateD = new Date(h.date + 'T00:00:00');
+    tr.innerHTML = '<td>' + fmtDayDate(dateD) + ' ' + dateD.getFullYear() + '</td><td>' + (h.dayName || '') + '</td><td>' + h.meal + '</td><td>' + (h.tag || '') + '</td>';
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+
+  document.getElementById('download-history-csv').onclick = () => downloadHistoryCsv(past);
+}
+
+function downloadHistoryCsv(past) {
+  const rows = [['Date', 'Day', 'Meal', 'Tag']];
+  past.forEach(h => rows.push([h.date, h.dayName || '', h.meal, h.tag || '']));
+  const csv = rows.map(r => r.map(cell => {
+    const s = String(cell == null ? '' : cell);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.href = url; a.download = 'meal-history-' + (CURRENT_USER.username || 'export') + '-' + stamp + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ======================================================================
+   IMPORT / EXPORT / RESET / CLEAR
+====================================================================== */
 function exportData() {
   const payload = storage.exportAll();
   payload.profile = CURRENT_USER;
@@ -1044,11 +1282,8 @@ function exportData() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   const stamp = new Date().toISOString().slice(0, 10);
-  a.href = url;
-  a.download = 'meal-planner-' + (CURRENT_USER.username || 'backup') + '-' + stamp + '.json';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  a.href = url; a.download = 'meal-planner-' + (CURRENT_USER.username || 'backup') + '-' + stamp + '.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 
@@ -1062,9 +1297,7 @@ function importData(file) {
       await loadState();
       renderAll();
       alert('Data imported successfully.');
-    } catch (err) {
-      alert('Could not import file: ' + err.message);
-    }
+    } catch (err) { alert('Could not import file: ' + err.message); }
   };
   reader.readAsText(file);
 }
@@ -1072,35 +1305,141 @@ function importData(file) {
 async function resetToSeed() {
   if (!confirm('Reset all meals to defaults? Your week plan and selections will be cleared too.')) return;
   STATE.meals = SEED_MEALS.slice();
-  STATE.selected.clear();
-  STATE.checkedItems.clear();
-  STATE.weekPlan = {};
-  await saveMeals();
-  await saveSelected();
-  await saveChecked();
-  await saveWeekPlan();
+  STATE.selected.clear(); STATE.checkedItems.clear(); STATE.weekPlan = {};
+  await saveMeals(); await saveSelected(); await saveChecked(); await saveWeekPlan();
   renderAll();
 }
 
 async function clearAllMeals() {
   if (!confirm('This will delete ALL your meals, your week plan, and your selections. You can always reload the default meals from the gear menu. Continue?')) return;
   if (!confirm('Are you sure? This cannot be undone.')) return;
-  STATE.meals = [];
-  STATE.selected.clear();
-  STATE.checkedItems.clear();
-  STATE.weekPlan = {};
-  await saveMeals();
-  await saveSelected();
-  await saveChecked();
-  await saveWeekPlan();
+  STATE.meals = []; STATE.selected.clear(); STATE.checkedItems.clear(); STATE.weekPlan = {};
+  await saveMeals(); await saveSelected(); await saveChecked(); await saveWeekPlan();
   renderAll();
 }
 
+async function copyPreviousWeek() {
+  const prevStart = addWeeks(STATE.viewWeekStart, -1);
+  const prevDates = getWeekDates(prevStart);
+  const currentDates = getWeekDates(STATE.viewWeekStart);
+  const toCopy = [];
+  prevDates.forEach((d, i) => {
+    const meal = STATE.weekPlan[isoDate(d)];
+    const targetKey = isoDate(currentDates[i]);
+    // skip past dates so we don't rewrite history
+    if (meal && !isPastDate(targetKey)) toCopy.push({ targetDate: targetKey, dayName: DAYS[i], meal });
+  });
+  if (!toCopy.length) { alert('Nothing to copy. Either the previous week is empty, or this week\'s days have already passed.'); return; }
+  const overwriting = toCopy.filter(c => STATE.weekPlan[c.targetDate]).length;
+  let msg = 'Copy ' + toCopy.length + ' meal' + (toCopy.length === 1 ? '' : 's') + ' from previous week?';
+  if (overwriting > 0) msg += ' (' + overwriting + ' day' + (overwriting === 1 ? ' has' : 's have') + ' an existing meal that will be overwritten.)';
+  if (!confirm(msg)) return;
+  toCopy.forEach(c => {
+    STATE.weekPlan[c.targetDate] = c.meal;
+  });
+  await saveWeekPlan();
+  renderWeekGrid();
+}
+
+/* ======================================================================
+   LOCATION MODAL with autocomplete
+====================================================================== */
+let locationDebounce;
+let locationCandidates = [];
+let locationSelected = null;
+
+function openLocationModal() {
+  document.getElementById('location-modal').style.display = 'flex';
+  const input = document.getElementById('loc-search');
+  input.value = STATE.location ? (STATE.location.postcode || STATE.location.name) : '';
+  document.getElementById('loc-results').style.display = 'none';
+  document.getElementById('loc-status').textContent = STATE.location
+    ? 'Currently: ' + STATE.location.name + (STATE.location.admin1 ? ', ' + STATE.location.admin1 : '') + (STATE.location.postcode ? ' (' + STATE.location.postcode + ')' : '')
+    : 'Currently: Sydney (default)';
+  locationCandidates = [];
+  locationSelected = null;
+  setTimeout(() => input.focus(), 30);
+}
+
+function closeLocationModal() {
+  document.getElementById('location-modal').style.display = 'none';
+}
+
+function renderLocationResults(results) {
+  const list = document.getElementById('loc-results');
+  list.innerHTML = '';
+  if (!results.length) {
+    list.style.display = 'none';
+    return;
+  }
+  list.style.display = 'block';
+  results.forEach((r, idx) => {
+    const item = document.createElement('div');
+    item.className = 'autocomplete-item';
+    const nice = r.name + (r.admin1 ? ', ' + r.admin1 : '');
+    const pc = r.postcode ? ' ' + r.postcode : '';
+    item.innerHTML = '<span>' + nice + '</span><span class="ac-sub">' + pc + '</span>';
+    item.onmousedown = (e) => e.preventDefault();
+    item.onclick = () => {
+      locationSelected = r;
+      document.getElementById('loc-search').value = nice + pc;
+      list.style.display = 'none';
+      document.getElementById('loc-status').textContent = 'Selected: ' + nice + pc;
+    };
+    list.appendChild(item);
+  });
+}
+
+async function doLocationSearch(q) {
+  if (!q || q.trim().length < 2) {
+    renderLocationResults([]);
+    return;
+  }
+  document.getElementById('loc-status').textContent = 'Searching...';
+  try {
+    const results = await geocodeSearch(q);
+    locationCandidates = results;
+    renderLocationResults(results);
+    document.getElementById('loc-status').textContent = results.length ? 'Found ' + results.length + ' match' + (results.length === 1 ? '' : 'es') + '. Click one to select.' : 'No matches found.';
+  } catch (e) {
+    document.getElementById('loc-status').textContent = 'Search failed. Check your connection.';
+  }
+}
+
+async function saveLocationFromModal() {
+  const input = document.getElementById('loc-search');
+  if (!input.value.trim()) {
+    STATE.location = null;
+    await saveLocation();
+    closeLocationModal();
+    await loadWeather();
+    renderWeekGrid();
+    return;
+  }
+  if (!locationSelected) {
+    document.getElementById('loc-status').textContent = 'Please pick a result from the list, or clear the input to use Sydney.';
+    return;
+  }
+  STATE.location = {
+    name: locationSelected.name,
+    admin1: locationSelected.admin1,
+    postcode: locationSelected.postcode,
+    lat: locationSelected.lat,
+    lon: locationSelected.lon
+  };
+  await saveLocation();
+  closeLocationModal();
+  await loadWeather();
+  renderWeekGrid();
+}
+
+/* ======================================================================
+   AUTH
+====================================================================== */
 const SESSION_KEY = 'mealPlanner:session';
-function saveSession(profile) { try { localStorage.setItem(SESSION_KEY, JSON.stringify(profile)); } catch {} }
+function saveSession(p) { try { localStorage.setItem(SESSION_KEY, JSON.stringify(p)); } catch {} }
 function loadSession() { try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch { return null; } }
 function clearSession() { try { localStorage.removeItem(SESSION_KEY); } catch {} }
-
 function normaliseUsername(u) { return u.trim().toLowerCase(); }
 
 function showLoginStep(n) {
@@ -1113,9 +1452,7 @@ function showLoginStep(n) {
 }
 
 function showApp() {
-  ['login-step1', 'login-step2', 'login-step3'].forEach(id => {
-    document.getElementById(id).style.display = 'none';
-  });
+  ['login-step1', 'login-step2', 'login-step3'].forEach(id => { document.getElementById(id).style.display = 'none'; });
   document.getElementById('app-view').style.display = 'block';
 }
 
@@ -1126,37 +1463,19 @@ function showLoginMessage(stepNum, message, isError) {
   el.className = 'login-message ' + (isError ? 'error' : 'success');
   el.textContent = message;
 }
-function clearLoginMessages() {
-  document.querySelectorAll('.login-message').forEach(el => { el.style.display = 'none'; el.textContent = ''; });
-}
+function clearLoginMessages() { document.querySelectorAll('.login-message').forEach(el => { el.style.display = 'none'; el.textContent = ''; }); }
 
 async function continueFromUsername() {
   clearLoginMessages();
-  const raw = document.getElementById('login-username').value;
-  const username = normaliseUsername(raw);
+  const username = normaliseUsername(document.getElementById('login-username').value);
   if (!username) { showLoginMessage(1, 'Please enter a username.', true); return; }
   if (username.length < 2) { showLoginMessage(1, 'Username should be at least 2 characters.', true); return; }
   pendingUsername = username;
-
   const btn = document.getElementById('login-continue-btn');
-  btn.disabled = true;
-  btn.textContent = 'Checking...';
-
-  const { data, error } = await supabaseClient
-    .from('profiles')
-    .select('id, username, first_name, last_name')
-    .eq('username', username)
-    .maybeSingle();
-
-  btn.disabled = false;
-  btn.textContent = 'Continue';
-
-  if (error) {
-    console.error('Lookup error', error);
-    showLoginMessage(1, 'Could not check username: ' + error.message, true);
-    return;
-  }
-
+  btn.disabled = true; btn.textContent = 'Checking...';
+  const { data, error } = await supabaseClient.from('profiles').select('id, username, first_name, last_name').eq('username', username).maybeSingle();
+  btn.disabled = false; btn.textContent = 'Continue';
+  if (error) { console.error('Lookup error', error); showLoginMessage(1, 'Could not check username: ' + error.message, true); return; }
   if (data) {
     pendingProfile = data;
     document.getElementById('existing-user-name').textContent = data.first_name || data.username;
@@ -1175,39 +1494,21 @@ async function createNewAccount() {
   const firstName = document.getElementById('login-first-name').value.trim();
   const lastName = document.getElementById('login-last-name').value.trim();
   if (!firstName) { showLoginMessage(2, 'Please enter your first name.', true); return; }
-
   const btn = document.getElementById('login-create-btn');
-  btn.disabled = true;
-  btn.textContent = 'Creating...';
-
-  const { data, error } = await supabaseClient
-    .from('profiles')
-    .insert({ username: pendingUsername, first_name: firstName, last_name: lastName || null })
-    .select('id, username, first_name, last_name')
-    .single();
-
-  btn.disabled = false;
-  btn.textContent = 'Create account';
-
+  btn.disabled = true; btn.textContent = 'Creating...';
+  const { data, error } = await supabaseClient.from('profiles').insert({ username: pendingUsername, first_name: firstName, last_name: lastName || null }).select('id, username, first_name, last_name').single();
+  btn.disabled = false; btn.textContent = 'Create account';
   if (error) {
     console.error('Create error', error);
     if (error.code === '23505') showLoginMessage(2, 'That username was just taken. Please go back and try a different one.', true);
     else showLoginMessage(2, 'Could not create account: ' + error.message, true);
     return;
   }
-
   signIn(data);
 }
 
-function confirmExistingSignIn() {
-  if (!pendingProfile) return;
-  signIn(pendingProfile);
-}
-
-function backToStep1() {
-  pendingProfile = null;
-  showLoginStep(1);
-}
+function confirmExistingSignIn() { if (pendingProfile) signIn(pendingProfile); }
+function backToStep1() { pendingProfile = null; showLoginStep(1); }
 
 async function signIn(profile) {
   CURRENT_USER = profile;
@@ -1217,20 +1518,21 @@ async function signIn(profile) {
   showApp();
   await loadState();
   renderAll();
-  loadWeather(); // fire and forget, will redraw the week grid when done
+  loadWeather();
 }
 
 function signOut() {
-  CURRENT_USER = null;
-  pendingUsername = null;
-  pendingProfile = null;
-  clearSession();
-  storage.cache = {};
+  CURRENT_USER = null; pendingUsername = null; pendingProfile = null;
+  clearSession(); storage.cache = {};
   document.getElementById('login-username').value = '';
   showLoginStep(1);
 }
 
+/* ======================================================================
+   EVENT WIRING
+====================================================================== */
 function setupEvents() {
+  // Login
   document.getElementById('login-continue-btn').onclick = continueFromUsername;
   document.getElementById('login-username').addEventListener('keydown', (e) => { if (e.key === 'Enter') continueFromUsername(); });
   document.getElementById('login-create-btn').onclick = createNewAccount;
@@ -1239,26 +1541,47 @@ function setupEvents() {
   document.getElementById('login-signin-btn').onclick = confirmExistingSignIn;
   document.getElementById('login-last-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') createNewAccount(); });
 
+  // Tabs
   document.querySelectorAll('.tab').forEach(t => {
     t.onclick = () => {
       STATE.activeTab = t.dataset.tab;
-      STATE.pickingForDay = null;
+      STATE.pickingForDate = null;
+      STATE.pickingForDayName = null;
       renderTabs();
       if (STATE.activeTab === 'week') { renderWeekGrid(); renderWeekPicker(); }
       if (STATE.activeTab === 'grocery') renderGrocery();
       if (STATE.activeTab === 'library') renderLibrary();
+      if (STATE.activeTab === 'stats') renderStats();
     };
   });
-  document.getElementById('clear-selection').onclick = () => {
-    STATE.selected.clear();
-    saveSelected();
-    renderMealGrid();
-    updateSelectedCount();
+
+  // Week navigation
+  document.getElementById('prev-week-btn').onclick = () => {
+    STATE.viewWeekStart = addWeeks(STATE.viewWeekStart, -1);
+    STATE.pickingForDate = null; STATE.pickingForDayName = null;
+    renderWeekGrid(); renderWeekPicker();
   };
+  document.getElementById('next-week-btn').onclick = () => {
+    STATE.viewWeekStart = addWeeks(STATE.viewWeekStart, 1);
+    STATE.pickingForDate = null; STATE.pickingForDayName = null;
+    renderWeekGrid(); renderWeekPicker();
+  };
+  document.getElementById('this-week-btn').onclick = () => {
+    STATE.viewWeekStart = startOfWeek(new Date());
+    STATE.pickingForDate = null; STATE.pickingForDayName = null;
+    renderWeekGrid(); renderWeekPicker();
+  };
+  document.getElementById('copy-prev-week-btn').onclick = copyPreviousWeek;
+
+  // Other UI
+  document.getElementById('clear-selection').onclick = () => { STATE.selected.clear(); saveSelected(); renderMealGrid(); updateSelectedCount(); };
   document.getElementById('clear-week').onclick = () => {
-    if (!Object.keys(STATE.weekPlan).length) return;
-    if (confirm('Clear all meals from this week?')) {
-      STATE.weekPlan = {};
+    const dates = getWeekDates(STATE.viewWeekStart).map(isoDate);
+    const editable = dates.filter(d => !isPastDate(d) || STATE.unlockedDates.has(d));
+    const has = editable.some(d => STATE.weekPlan[d]);
+    if (!has) { alert('Nothing to clear (past days are read-only, click Edit on a day to unlock it).'); return; }
+    if (confirm('Clear meals from this week? Past days that are still locked will be kept.')) {
+      editable.forEach(d => delete STATE.weekPlan[d]);
       saveWeekPlan();
       renderWeekGrid();
     }
@@ -1267,10 +1590,7 @@ function setupEvents() {
   document.getElementById('add-meal-btn').onclick = startAddMeal;
   document.getElementById('cancel-meal-btn').onclick = cancelForm;
   document.getElementById('save-meal-btn').onclick = saveForm;
-  document.getElementById('add-ingredient-row').onclick = () => {
-    STATE.formIngredients.push({ name: '', amount: 1, measure: 'Unit' });
-    renderFormIngredients();
-  };
+  document.getElementById('add-ingredient-row').onclick = () => { STATE.formIngredients.push({ name: '', amount: 1, measure: 'Unit' }); renderFormIngredients(); };
 
   const settingsMenu = document.getElementById('settings-menu');
   document.getElementById('settings-btn').onclick = (e) => { e.stopPropagation(); settingsMenu.classList.toggle('open'); };
@@ -1278,59 +1598,41 @@ function setupEvents() {
 
   document.getElementById('export-btn').onclick = () => { settingsMenu.classList.remove('open'); exportData(); };
   document.getElementById('import-btn').onclick = () => { settingsMenu.classList.remove('open'); document.getElementById('import-file').click(); };
-  document.getElementById('set-location-btn').onclick = () => { settingsMenu.classList.remove('open'); setWeatherLocation(); };
+  document.getElementById('set-location-btn').onclick = () => { settingsMenu.classList.remove('open'); openLocationModal(); };
   document.getElementById('reset-seed-btn').onclick = () => { settingsMenu.classList.remove('open'); resetToSeed(); };
   document.getElementById('clear-meals-btn').onclick = () => { settingsMenu.classList.remove('open'); clearAllMeals(); };
   document.getElementById('logout-btn').onclick = () => { settingsMenu.classList.remove('open'); signOut(); };
   document.getElementById('import-file').onchange = (e) => {
-    const f = e.target.files[0];
-    if (f) importData(f);
-    e.target.value = '';
+    const f = e.target.files[0]; if (f) importData(f); e.target.value = '';
   };
 
-  // Picker search input
+  // Picker search
   const pickerSearchEl = document.getElementById('week-meal-search');
-  pickerSearchEl.addEventListener('input', (e) => {
-    STATE.pickerSearch = e.target.value;
-    renderWeekPickerResults();
-  });
+  pickerSearchEl.addEventListener('input', (e) => { STATE.pickerSearch = e.target.value; renderWeekPickerResults(); });
   pickerSearchEl.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (STATE.pickerFiltered && STATE.pickerFiltered.length) {
-        assignMealToPickingDay(STATE.pickerFiltered[0].name);
-      }
+      if (STATE.pickerFiltered && STATE.pickerFiltered.length) assignMealToPickingDay(STATE.pickerFiltered[0].name);
     } else if (e.key === 'Escape') {
-      STATE.pickingForDay = null;
-      STATE.pickerSearch = '';
-      renderWeekGrid();
-      renderWeekPicker();
+      STATE.pickingForDate = null; STATE.pickingForDayName = null; STATE.pickerSearch = '';
+      renderWeekGrid(); renderWeekPicker();
     }
   });
-}
 
-async function setWeatherLocation() {
-  const current = STATE.location ? (STATE.location.postcode || STATE.location.name) : '';
-  const input = prompt('Enter your Australian postcode (e.g. 2010), or leave blank to use Sydney by default.', current);
-  if (input === null) return; // cancelled
-  const trimmed = input.trim();
-  if (!trimmed) {
-    STATE.location = null;
-    await saveLocation();
-    await loadWeather();
-    renderWeekGrid();
-    return;
-  }
-  try {
-    const loc = await lookupPostcode(trimmed);
-    STATE.location = loc;
-    await saveLocation();
-    await loadWeather();
-    renderWeekGrid();
-    alert('Weather location set to ' + loc.name + '.');
-  } catch (e) {
-    alert('Could not find that postcode. Try a different one, or leave blank to use Sydney.');
-  }
+  // Location modal
+  const locInput = document.getElementById('loc-search');
+  locInput.addEventListener('input', (e) => {
+    locationSelected = null;
+    clearTimeout(locationDebounce);
+    const q = e.target.value;
+    locationDebounce = setTimeout(() => doLocationSearch(q), 300);
+  });
+  locInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); saveLocationFromModal(); } });
+  document.getElementById('loc-cancel-btn').onclick = closeLocationModal;
+  document.getElementById('loc-save-btn').onclick = saveLocationFromModal;
+  document.getElementById('location-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'location-modal') closeLocationModal();
+  });
 }
 
 function renderAll() {
@@ -1342,17 +1644,14 @@ function renderAll() {
   updateSelectedCount();
   if (STATE.activeTab === 'grocery') renderGrocery();
   if (STATE.activeTab === 'library') renderLibrary();
+  if (STATE.activeTab === 'stats') renderStats();
 }
 
 async function init() {
   setupEvents();
   const saved = loadSession();
   if (saved && saved.id && saved.username) {
-    const { data, error } = await supabaseClient
-      .from('profiles')
-      .select('id, username, first_name, last_name')
-      .eq('id', saved.id)
-      .maybeSingle();
+    const { data, error } = await supabaseClient.from('profiles').select('id, username, first_name, last_name').eq('id', saved.id).maybeSingle();
     if (!error && data) { await signIn(data); return; }
     else clearSession();
   }
