@@ -494,18 +494,20 @@ const DEFAULT_LOCATION = { name: 'Sydney', lat: -33.8688, lon: 151.2093 };
 
 async function geocodeSearch(query) {
   if (!query || query.trim().length < 2) return [];
-  const url = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(query.trim()) + '&country=AU&count=8&language=en';
+  const url = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(query.trim()) + '&countryCode=AU&count=10&language=en';
   const res = await fetch(url);
   if (!res.ok) return [];
   const data = await res.json();
-  return (data.results || []).map(r => ({
-    name: r.name,
-    admin1: r.admin1 || '',
-    admin2: r.admin2 || '',
-    postcode: r.postcodes && r.postcodes[0] ? r.postcodes[0] : '',
-    lat: r.latitude,
-    lon: r.longitude
-  }));
+  return (data.results || [])
+    .filter(r => r.country_code === 'AU' || r.country === 'Australia') // hard guard against non-AU results
+    .map(r => ({
+      name: r.name,
+      admin1: r.admin1 || '',
+      admin2: r.admin2 || '',
+      postcode: r.postcodes && r.postcodes[0] ? r.postcodes[0] : '',
+      lat: r.latitude,
+      lon: r.longitude
+    }));
 }
 
 async function fetchWeather(loc) {
@@ -670,7 +672,7 @@ function renderWeekGrid() {
         wxEl.title = wInfo.label + ', ' + wx.min + '\u00b0 to ' + wx.max + '\u00b0';
         wxEl.innerHTML =
           '<div class="wx-top"><span class="wx-icon">' + wInfo.icon + '</span><span class="wx-max">' + wx.max + '\u00b0</span></div>' +
-          '<div class="wx-range">' + wx.min + '\u00b0 / ' + wx.max + '\u00b0</div>';
+          '<div class="wx-range">' + wx.max + '\u00b0 / ' + wx.min + '\u00b0</div>';
         header.appendChild(wxEl);
       }
     }
