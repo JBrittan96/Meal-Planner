@@ -106,12 +106,20 @@
   .day { background: var(--bg-primary); border: 0.5px solid var(--border-tertiary); border-radius: var(--radius-md); padding: 10px; min-height: 130px; cursor: pointer; display: flex; flex-direction: column; transition: border-color 0.15s; }
   .day:hover { border-color: var(--border-secondary); }
   .day.targeting { border: 2px solid var(--border-info); background: var(--bg-info); padding: 9px; }
-  .day-name { font-size: 11px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
+  .day-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 4px; }
+  .day-label { display: flex; flex-direction: column; gap: 2px; }
+  .day-name { font-size: 11px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+  .day-date { font-size: 11px; color: var(--text-tertiary); }
+  .day-today { color: var(--text-info); font-weight: 500; }
+  .day-weather { display: flex; align-items: center; gap: 3px; font-size: 11px; color: var(--text-secondary); white-space: nowrap; }
+  .day-weather .wx-icon { font-size: 14px; line-height: 1; }
   .day-meal { font-size: 13px; font-weight: 500; line-height: 1.3; flex: 1; }
   .day-meal.empty { color: var(--text-tertiary); font-weight: 400; font-style: italic; }
   .day-tag { font-size: 10px; padding: 2px 6px; border-radius: 999px; background: var(--bg-secondary); color: var(--text-secondary); align-self: flex-start; margin-top: 6px; }
   .day-clear { font-size: 11px; color: var(--text-tertiary); margin-top: 6px; cursor: pointer; align-self: flex-start; background: transparent; border: none; padding: 0; }
   .day-clear:hover { color: var(--text-danger); }
+  .picker-search { width: 100%; margin-bottom: 12px; font-size: 14px; padding: 10px 12px; }
+  .meal-card.first-match { border: 2px solid var(--border-info); padding: 11px; }
   .banner { background: var(--bg-info); color: var(--text-info); padding: 10px 14px; border-radius: var(--radius-md); margin-bottom: 1rem; font-size: 13px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .banner-cancel { background: transparent; border: 0.5px solid currentColor; border-radius: var(--radius-md); padding: 4px 10px; font-size: 12px; color: inherit; cursor: pointer; }
 
@@ -188,6 +196,8 @@
           <button class="menu-item" id="export-btn">Export data (backup)</button>
           <button class="menu-item" id="import-btn">Import data (restore)</button>
           <div class="menu-divider"></div>
+          <button class="menu-item" id="set-location-btn">Set weather location</button>
+          <div class="menu-divider"></div>
           <button class="menu-item" id="reset-seed-btn">Reset to default meals</button>
           <button class="menu-item danger" id="clear-meals-btn">Clear all meals</button>
           <div class="menu-divider"></div>
@@ -208,6 +218,7 @@
     <div id="week-banner-slot"></div>
     <div class="week" id="week-grid"></div>
     <div class="section-h" id="week-meal-picker-h" style="display:none;">Pick a meal for <span id="picker-day-label"></span></div>
+    <input type="text" class="picker-search" id="week-meal-search" placeholder="Type to search, Enter to pick the highlighted meal..." style="display:none;" />
     <div class="filter-row" id="week-tag-filters" style="display:none;"></div>
     <div class="meal-grid" id="week-meal-grid" style="display:none;"></div>
     <div class="action-bar" style="margin-top: 1rem;">
@@ -378,8 +389,106 @@ const STATE = {
   activeTag: 'All', weekTag: 'All', activeTab: 'week',
   checkedItems: new Set(), librarySearch: '',
   formMode: null, formIngredients: [], editingMealName: null,
-  pickingForDay: null
+  pickingForDay: null,
+  pickerSearch: '',
+  pickerFiltered: [],
+  weather: null,
+  location: null
 };
+
+/* Date helpers: week starts Monday */
+function startOfWeek(d) {
+  const date = new Date(d);
+  date.setHours(0, 0, 0, 0);
+  const day = date.getDay();
+  const diff = (day === 0 ? -6 : 1 - day);
+  date.setDate(date.getDate() + diff);
+  return date;
+}
+function getWeekDates() {
+  const monday = startOfWeek(new Date());
+  return DAYS.map((_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d;
+  });
+}
+function isSameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+function fmtDayDate(d) {
+  return d.getDate() + ' ' + d.toLocaleString('en-AU', { month: 'short' });
+}
+function isoDate(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+/* Weather: Open-Meteo, free, no key. Maps WMO codes to small label + emoji icon. */
+const WEATHER_ICONS = {
+  0: { icon: '\u2600\ufe0f', label: 'Clear' },
+  1: { icon: '\ud83c\udf24\ufe0f', label: 'Mostly clear' },
+  2: { icon: '\u26c5', label: 'Partly cloudy' },
+  3: { icon: '\u2601\ufe0f', label: 'Cloudy' },
+  45: { icon: '\ud83c\udf2b\ufe0f', label: 'Foggy' },
+  48: { icon: '\ud83c\udf2b\ufe0f', label: 'Foggy' },
+  51: { icon: '\ud83c\udf26\ufe0f', label: 'Drizzle' },
+  53: { icon: '\ud83c\udf26\ufe0f', label: 'Drizzle' },
+  55: { icon: '\ud83c\udf26\ufe0f', label: 'Drizzle' },
+  61: { icon: '\ud83c\udf27\ufe0f', label: 'Rain' },
+  63: { icon: '\ud83c\udf27\ufe0f', label: 'Rain' },
+  65: { icon: '\ud83c\udf27\ufe0f', label: 'Heavy rain' },
+  71: { icon: '\ud83c\udf28\ufe0f', label: 'Snow' },
+  73: { icon: '\ud83c\udf28\ufe0f', label: 'Snow' },
+  75: { icon: '\ud83c\udf28\ufe0f', label: 'Heavy snow' },
+  80: { icon: '\ud83c\udf26\ufe0f', label: 'Showers' },
+  81: { icon: '\ud83c\udf27\ufe0f', label: 'Showers' },
+  82: { icon: '\ud83c\udf27\ufe0f', label: 'Heavy showers' },
+  95: { icon: '\u26c8\ufe0f', label: 'Storm' },
+  96: { icon: '\u26c8\ufe0f', label: 'Storm' },
+  99: { icon: '\u26c8\ufe0f', label: 'Storm' }
+};
+function weatherFor(code) { return WEATHER_ICONS[code] || { icon: '', label: '' }; }
+
+/* Default location: Sydney CBD. Override per-user via gear menu (postcode). */
+const DEFAULT_LOCATION = { name: 'Sydney', lat: -33.8688, lon: 151.2093 };
+
+async function lookupPostcode(postcode) {
+  // Open-Meteo geocoding handles AU postcodes pretty well
+  const url = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(postcode) + '&country=AU&count=1';
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Geocoding failed');
+  const data = await res.json();
+  if (!data.results || !data.results.length) throw new Error('Postcode not found');
+  const r = data.results[0];
+  return { name: r.name, lat: r.latitude, lon: r.longitude, postcode: postcode };
+}
+
+async function fetchWeather(loc) {
+  const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + loc.lat + '&longitude=' + loc.lon +
+    '&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=7';
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Weather fetch failed');
+  return res.json();
+}
+
+async function loadWeather() {
+  const loc = STATE.location || DEFAULT_LOCATION;
+  try {
+    const data = await fetchWeather(loc);
+    if (!data || !data.daily) return;
+    STATE.weather = {};
+    data.daily.time.forEach((iso, i) => {
+      STATE.weather[iso] = {
+        code: data.daily.weather_code[i],
+        max: Math.round(data.daily.temperature_2m_max[i]),
+        min: Math.round(data.daily.temperature_2m_min[i])
+      };
+    });
+    if (STATE.activeTab === 'week') renderWeekGrid();
+  } catch (e) {
+    console.warn('Weather load failed', e);
+  }
+}
 
 async function loadState() {
   await storage.loadAll();
@@ -388,12 +497,14 @@ async function loadState() {
   STATE.selected = new Set(storage.get('selected') || []);
   STATE.checkedItems = new Set(storage.get('checked') || []);
   STATE.weekPlan = storage.get('weekPlan') || {};
+  STATE.location = storage.get('location') || null;
   if (meals == null) await storage.set('meals', STATE.meals);
 }
 function saveMeals() { return storage.set('meals', STATE.meals); }
 function saveSelected() { return storage.set('selected', [...STATE.selected]); }
 function saveChecked() { return storage.set('checked', [...STATE.checkedItems]); }
 function saveWeekPlan() { return storage.set('weekPlan', STATE.weekPlan); }
+function saveLocation() { return storage.set('location', STATE.location); }
 
 function renderTabs() {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === STATE.activeTab));
@@ -403,13 +514,43 @@ function renderTabs() {
 function renderWeekGrid() {
   const grid = document.getElementById('week-grid');
   grid.innerHTML = '';
-  DAYS.forEach(day => {
+  const dates = getWeekDates();
+  const today = new Date();
+  DAYS.forEach((day, idx) => {
     const cell = document.createElement('div');
     cell.className = 'day' + (STATE.pickingForDay === day ? ' targeting' : '');
+
+    const date = dates[idx];
+    const isToday = isSameDay(date, today);
+
+    const header = document.createElement('div');
+    header.className = 'day-header';
+
+    const labelWrap = document.createElement('div');
+    labelWrap.className = 'day-label';
     const dayName = document.createElement('div');
-    dayName.className = 'day-name';
+    dayName.className = 'day-name' + (isToday ? ' day-today' : '');
     dayName.textContent = day.slice(0, 3);
-    cell.appendChild(dayName);
+    labelWrap.appendChild(dayName);
+    const dateEl = document.createElement('div');
+    dateEl.className = 'day-date' + (isToday ? ' day-today' : '');
+    dateEl.textContent = fmtDayDate(date);
+    labelWrap.appendChild(dateEl);
+    header.appendChild(labelWrap);
+
+    if (STATE.weather) {
+      const wx = STATE.weather[isoDate(date)];
+      if (wx) {
+        const wxEl = document.createElement('div');
+        wxEl.className = 'day-weather';
+        wxEl.title = weatherFor(wx.code).label + ', ' + wx.min + ' to ' + wx.max + ' degrees';
+        wxEl.innerHTML = '<span class="wx-icon">' + weatherFor(wx.code).icon + '</span>' +
+          '<span>' + wx.max + '\u00b0</span>';
+        header.appendChild(wxEl);
+      }
+    }
+    cell.appendChild(header);
+
     const mealName = STATE.weekPlan[day];
     const mealText = document.createElement('div');
     mealText.className = 'day-meal' + (mealName ? '' : ' empty');
@@ -436,7 +577,12 @@ function renderWeekGrid() {
       cell.appendChild(clear);
     }
     cell.onclick = () => {
-      STATE.pickingForDay = STATE.pickingForDay === day ? null : day;
+      if (STATE.pickingForDay === day) {
+        STATE.pickingForDay = null;
+      } else {
+        STATE.pickingForDay = day;
+        STATE.pickerSearch = '';
+      }
       renderWeekGrid();
       renderWeekPicker();
     };
@@ -444,15 +590,27 @@ function renderWeekGrid() {
   });
 }
 
+function assignMealToPickingDay(mealName) {
+  if (!STATE.pickingForDay) return;
+  STATE.weekPlan[STATE.pickingForDay] = mealName;
+  STATE.pickingForDay = null;
+  STATE.pickerSearch = '';
+  saveWeekPlan();
+  renderWeekGrid();
+  renderWeekPicker();
+}
+
 function renderWeekPicker() {
   const banner = document.getElementById('week-banner-slot');
   const headerH = document.getElementById('week-meal-picker-h');
+  const searchInput = document.getElementById('week-meal-search');
   const filters = document.getElementById('week-tag-filters');
   const grid = document.getElementById('week-meal-grid');
 
   if (!STATE.pickingForDay) {
     banner.innerHTML = '';
     headerH.style.display = 'none';
+    searchInput.style.display = 'none';
     filters.style.display = 'none';
     grid.style.display = 'none';
     return;
@@ -462,13 +620,14 @@ function renderWeekPicker() {
   const b = document.createElement('div');
   b.className = 'banner';
   const span = document.createElement('span');
-  span.innerHTML = 'Click a meal below to assign it to <strong>' + STATE.pickingForDay + '</strong>.';
+  span.innerHTML = 'Type to search, click a meal, or press Enter to pick the highlighted one for <strong>' + STATE.pickingForDay + '</strong>.';
   b.appendChild(span);
   const cancelBtn = document.createElement('button');
   cancelBtn.className = 'banner-cancel';
   cancelBtn.textContent = 'Cancel';
   cancelBtn.onclick = () => {
     STATE.pickingForDay = null;
+    STATE.pickerSearch = '';
     renderWeekGrid();
     renderWeekPicker();
   };
@@ -477,27 +636,50 @@ function renderWeekPicker() {
 
   document.getElementById('picker-day-label').textContent = STATE.pickingForDay;
   headerH.style.display = '';
+  searchInput.style.display = '';
   filters.style.display = '';
   grid.style.display = '';
+
+  searchInput.value = STATE.pickerSearch;
+  setTimeout(() => searchInput.focus(), 30);
 
   filters.innerHTML = '';
   ['All', ...TAGS].forEach(tag => {
     const btn = document.createElement('button');
     btn.className = 'filter-btn' + (STATE.weekTag === tag ? ' active' : '');
     btn.textContent = tag;
-    btn.onclick = () => { STATE.weekTag = tag; renderWeekPicker(); };
+    btn.onmousedown = (e) => e.preventDefault(); // keep search input focused
+    btn.onclick = () => { STATE.weekTag = tag; renderWeekPickerResults(); };
     filters.appendChild(btn);
   });
 
+  renderWeekPickerResults();
+}
+
+function renderWeekPickerResults() {
+  const grid = document.getElementById('week-meal-grid');
   grid.innerHTML = '';
-  const filtered = STATE.weekTag === 'All' ? STATE.meals : STATE.meals.filter(m => m.tag === STATE.weekTag);
+
+  const q = STATE.pickerSearch.trim().toLowerCase();
+  let filtered = STATE.weekTag === 'All' ? STATE.meals : STATE.meals.filter(m => m.tag === STATE.weekTag);
+  if (q) {
+    filtered = filtered.filter(m =>
+      m.name.toLowerCase().includes(q) ||
+      m.tag.toLowerCase().includes(q) ||
+      m.ingredients.some(ing => (ing[0] || '').toLowerCase().includes(q))
+    );
+  }
+  filtered = filtered.slice().sort((a, b) => a.name.localeCompare(b.name));
+  STATE.pickerFiltered = filtered;
+
   if (!filtered.length) {
-    grid.innerHTML = '<div class="empty">No meals available. Add some in the Meal library tab first.</div>';
+    grid.innerHTML = '<div class="empty">' + (q ? 'No meals match "' + STATE.pickerSearch + '".' : 'No meals available. Add some in the Meal library tab first.') + '</div>';
     return;
   }
-  filtered.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach(meal => {
+
+  filtered.forEach((meal, idx) => {
     const card = document.createElement('div');
-    card.className = 'meal-card';
+    card.className = 'meal-card' + (idx === 0 && q ? ' first-match' : '');
     const nameEl = document.createElement('span');
     nameEl.className = 'meal-name';
     nameEl.textContent = meal.name;
@@ -506,13 +688,8 @@ function renderWeekPicker() {
     tagEl.textContent = meal.tag;
     card.appendChild(nameEl);
     card.appendChild(tagEl);
-    card.onclick = () => {
-      STATE.weekPlan[STATE.pickingForDay] = meal.name;
-      STATE.pickingForDay = null;
-      saveWeekPlan();
-      renderWeekGrid();
-      renderWeekPicker();
-    };
+    card.onmousedown = (e) => e.preventDefault();
+    card.onclick = () => assignMealToPickingDay(meal.name);
     grid.appendChild(card);
   });
 }
@@ -1040,6 +1217,7 @@ async function signIn(profile) {
   showApp();
   await loadState();
   renderAll();
+  loadWeather(); // fire and forget, will redraw the week grid when done
 }
 
 function signOut() {
@@ -1100,6 +1278,7 @@ function setupEvents() {
 
   document.getElementById('export-btn').onclick = () => { settingsMenu.classList.remove('open'); exportData(); };
   document.getElementById('import-btn').onclick = () => { settingsMenu.classList.remove('open'); document.getElementById('import-file').click(); };
+  document.getElementById('set-location-btn').onclick = () => { settingsMenu.classList.remove('open'); setWeatherLocation(); };
   document.getElementById('reset-seed-btn').onclick = () => { settingsMenu.classList.remove('open'); resetToSeed(); };
   document.getElementById('clear-meals-btn').onclick = () => { settingsMenu.classList.remove('open'); clearAllMeals(); };
   document.getElementById('logout-btn').onclick = () => { settingsMenu.classList.remove('open'); signOut(); };
@@ -1108,6 +1287,50 @@ function setupEvents() {
     if (f) importData(f);
     e.target.value = '';
   };
+
+  // Picker search input
+  const pickerSearchEl = document.getElementById('week-meal-search');
+  pickerSearchEl.addEventListener('input', (e) => {
+    STATE.pickerSearch = e.target.value;
+    renderWeekPickerResults();
+  });
+  pickerSearchEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (STATE.pickerFiltered && STATE.pickerFiltered.length) {
+        assignMealToPickingDay(STATE.pickerFiltered[0].name);
+      }
+    } else if (e.key === 'Escape') {
+      STATE.pickingForDay = null;
+      STATE.pickerSearch = '';
+      renderWeekGrid();
+      renderWeekPicker();
+    }
+  });
+}
+
+async function setWeatherLocation() {
+  const current = STATE.location ? (STATE.location.postcode || STATE.location.name) : '';
+  const input = prompt('Enter your Australian postcode (e.g. 2010), or leave blank to use Sydney by default.', current);
+  if (input === null) return; // cancelled
+  const trimmed = input.trim();
+  if (!trimmed) {
+    STATE.location = null;
+    await saveLocation();
+    await loadWeather();
+    renderWeekGrid();
+    return;
+  }
+  try {
+    const loc = await lookupPostcode(trimmed);
+    STATE.location = loc;
+    await saveLocation();
+    await loadWeather();
+    renderWeekGrid();
+    alert('Weather location set to ' + loc.name + '.');
+  } catch (e) {
+    alert('Could not find that postcode. Try a different one, or leave blank to use Sydney.');
+  }
 }
 
 function renderAll() {
