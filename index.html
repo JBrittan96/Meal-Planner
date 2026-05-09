@@ -248,6 +248,7 @@
     <button class="tab" data-tab="grocery">Grocery list</button>
     <button class="tab" data-tab="library">Meal library</button>
     <button class="tab" data-tab="stats">Stats</button>
+    <button class="tab" data-tab="help">How to use</button>
   </div>
 
   <div id="pane-week" class="pane active">
@@ -318,6 +319,31 @@
 
   <div id="pane-stats" class="pane">
     <div id="stats-content"></div>
+  </div>
+
+  <div id="pane-help" class="pane">
+    <div style="max-width: 720px;">
+      <h2 style="margin-top: 0;">How to use</h2>
+      <p>A meal planner for your week, with a grocery list and a bit of history. Your data is saved automatically and synced across devices when you log in with the same username.</p>
+
+      <h3>Week</h3>
+      <p>Pick a meal for each day from the dropdown. Use the arrows at the top to jump between weeks. Past days are read-only, click <em>Edit</em> on a cell if you need to change history. Weather for the next seven days shows up at the top once you set a location.</p>
+
+      <h3>Quick select</h3>
+      <p>Tick meals you want to add to the grocery list without committing them to a day. Useful for "we'll have this sometime soon" buys.</p>
+
+      <h3>Grocery list</h3>
+      <p>Auto-built from the current week's plan plus anything ticked in Quick select. Check items off as you shop, the list resets when the underlying meals change.</p>
+
+      <h3>Meal library</h3>
+      <p>Your master list of meals. Each meal has a name, a tag (Chicken, Beef, Pasta, etc.), and an ingredient list with quantities. Add, edit, or delete from here. Changes flow through to the grocery list automatically.</p>
+
+      <h3>Stats</h3>
+      <p>Patterns from your weekPlan history. Top meals, ones you haven't picked in a while, tag breakdown, and a full searchable history. Export to CSV if you want to dig further in a spreadsheet.</p>
+
+      <h3>Settings</h3>
+      <p>The header shows your name and a few buttons. Change your weather location, change which day your week starts on, or log out. Logging in on another device with the same username pulls your data across.</p>
+    </div>
   </div>
 </div>
 
